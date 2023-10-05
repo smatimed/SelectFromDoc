@@ -1,8 +1,8 @@
 # SelectFromDoc
-Select data from documents (Excel, csv, txt) or clipboard using SQL language.
+This program lets you select data from documents (Excel, csv, txt) or clipboard using SQL language.
 
 
-1. Cloning the repository
+#1. Cloning the repository
 --> Clone the repository using the command below :
 git clone https://github.com/smatimed/SelectFromDoc.git
 
@@ -11,24 +11,24 @@ cd SelectFromDoc
 
 --> Create a virtual environment :
 
-# Install pipenv first
+<!--- Install pipenv first --->
 pip install pipenv
 
-# Create the virtual environment
+<!--- Create the virtual environment --->
 set pipenv_venv_in_project=1
 pipenv install
-# The requirements will be automatically installed
+<!--- The requirements will be automatically installed --->
 
 --> Activate the virtual environment :
 .venv\scripts\activate
 
 
-2. Running the application
+#2. Running the application
 --> To run the application, use :
 python SelectFromDoc.py
 
 
-3. Using the application
+#3. Using the application
 - select a document (Excel, csv or fixed-width text) by clicking on the button "..."
 - or copy data to clipboard, in this case click on the button "From clipboard" (after having copied data)
 - write a SELECT request ('from doc' is mandatory)
