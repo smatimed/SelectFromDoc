@@ -45,3 +45,8 @@ python SelectFromDoc.py
 - click on "Execute" button
 - to save the result, choose a format (Csv, Excel, Html or Text) and click on "Export" button
 - to get help about SQlite select click on the button "SQL help".
+
+
+## Screenshots
+### main window
+![mainwindow snap](https://github.com/smatimed/screenshots/main-screen.png?raw=true)
