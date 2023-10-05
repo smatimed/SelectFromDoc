@@ -27,7 +27,8 @@ screen_height = root.winfo_screenheight()
 root.geometry(f'{root_width}x{root_height}+{(screen_width-root_width) // 2}+{(screen_height-root_height) // 2}')
 
 root.title('SQL from Document (Excel, Csv, Text) or Clipboard')
-
+# root.iconbitmap(path.abspath(path.join(path.dirname(__file__), 'SelectFromDoc.ico')))
+root.iconbitmap('SelectFromDoc.ico')
 
 def on_resize(event):
     # Update the size of 'frame_sql_resultat' when the window is resized
@@ -73,6 +74,7 @@ def ouvrir_Sql_Aide():
             text_aide['wrap'] = 'none'
     
     Sql_Aide = tk.Toplevel()
+    Sql_Aide.iconbitmap('SelectFromDoc.ico')
     Sql_Aide.title("SQL help")
     win_width = 550
     win_height = 370
@@ -98,12 +100,12 @@ def ouvrir_Sql_Aide():
 
     frame_enbas = ttk.Frame(Sql_Aide)
     frame_enbas.grid(row=1, column=0, sticky='WE')
-    ttk.Style().configure("Custom.TFrame", background=bg_couleur)
+    ttk.Style().configure("Custom.TFrame", background=bg_color_default)
     frame_enbas.configure(style="Custom.TFrame")
 
     wordWrap = IntVar()
     option_wordwrap = ttk.Checkbutton(frame_enbas, text="Word wrap", variable=wordWrap, onvalue=1, offvalue=0, width=10, command=changerWordWrap)
-    ttk.Style().configure("Custom.TCheckbutton", foreground=fg_couleur, background=bg_couleur)
+    ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
     option_wordwrap.configure(style="Custom.TCheckbutton")
     option_wordwrap.pack(side=LEFT)
 
@@ -645,22 +647,26 @@ current_row = 0
 
 root.grid_columnconfigure(0, weight=1)   # makes the widgets with sticky='WE' fill all the width
 
-bg_couleur = "#b7cbf3"  # #e7ecf6
-fg_couleur = "#31579D"
-fg_couleur2 = "maroon"
-# bg_couleur = "#31579D"   # "#82d8bb"
-# fg_couleur = "white"    # #e7ecf6 , "black"
-# fg_couleur2 = "yellow"   # "#800"
-fg_couleur3 = "gray"   # "#808080"
+# Colors
+bg_color_default = "#b7cbf3"
+fg_color_default_Label = "#31579D"
+fg_color_default_Label_ShortcutKey = "maroon"
+fg_color_default_Label_Copyright = "gray"
+bg_color_default_Button = "#31579D"
+fg_color_default_Button = "#31579D"
 
-ttk.Style().configure('TFrame', background=bg_couleur)
+# --- Default styles
+style = ttk.Style()
+style.configure('TFrame', background=bg_color_default)
+style.configure('TLabel', foreground=fg_color_default_Label, background=bg_color_default, font=("Helvetica", 10))
+style.configure('TButton', foreground=fg_color_default_Button, background=bg_color_default_Button, font=("Helvetica", 10))
 
 # --- docSource
 frame_1 = ttk.Frame(root)
 frame_1.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
 lbl_path = ttk.Label(frame_1, text="Source Document:")
-lbl_path.configure(foreground=fg_couleur, background=bg_couleur)
+# lbl_path.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lbl_path.pack(side=LEFT, padx=5, pady=10)
 
 docSource = StringVar()
@@ -701,17 +707,17 @@ frame_2.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
 # --- bouton Executer
 lblF8 = ttk.Label(frame_2,text="F8")
-ttk.Style().configure("Bold.TLabel", font=("TkDefaultFont", 9, "bold"))
-lblF8.configure(style="Bold.TLabel", foreground=fg_couleur2, background=bg_couleur)
+# ttk.Style().configure("Bold.TLabel", font=("TkDefaultFont", 9, "bold"))
+style.configure("Bold.TLabel", font=("TkDefaultFont", 9, "bold"), foreground=fg_color_default_Label_ShortcutKey, background=bg_color_default)
+lblF8.configure(style="Bold.TLabel")
 lblF8.pack(side=LEFT, padx=7)
-# ttk.Label(frame_2,text="F8", fg="#800", bg=bg_couleur).pack(side=LEFT)
 boutonExecuter = ttk.Button(frame_2, text="  Execute  ", state="disabled", command=Executer)
 boutonExecuter.pack(side=LEFT, padx=5, pady=10)
 
 # --- Temps d'execution
 vTempsExec = StringVar()
 lblTempsExec = ttk.Label(frame_2, textvariable=vTempsExec)
-lblTempsExec.configure(foreground=fg_couleur, background=bg_couleur)
+# lblTempsExec.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblTempsExec.pack(side=LEFT, padx=10, pady=10)
 
 current_row += 1
@@ -741,8 +747,8 @@ frame_3.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
 # --- Export
 lblExport = ttk.Label(frame_3,text="Export format:")
-lblExport.configure(foreground=fg_couleur, background=bg_couleur)
-lblExport.pack(side=LEFT, padx=10, pady=10)   # , bg=bg_couleur
+# lblExport.configure(foreground=fg_color_default_Label, background=bg_color_default)
+lblExport.pack(side=LEFT, padx=10, pady=10)   # , bg=bg_color_default
 
 exportFormat = StringVar()
 exportFormat.set("Excel")
@@ -766,7 +772,7 @@ current_row += 1
 # --- copyright label
 m_smati = (77, 111, 104, 97, 109, 101, 100, 32, 83, 77, 65, 84, 73)
 lbl_copyright = ttk.Label(root, text="By " + ''.join((chr(i) for i in m_smati)) + " , September 2023", anchor=CENTER) #, height=2)  #, fg="#808080"
-lbl_copyright.configure(foreground=fg_couleur3, background=bg_couleur)
+lbl_copyright.configure(foreground=fg_color_default_Label_Copyright) #, background=bg_color_default)
 lbl_copyright.grid(row=current_row, column=0, columnspan=5, ipady=10, sticky="WENS")
 current_row += 1
 
