@@ -49,4 +49,4 @@ python SelectFromDoc.py
 
 ## Screenshots
 ### main window
-![mainwindow snap](https://github.com/smatimed/screenshots/main-screen.png?raw=true)
+![mainwindow](https://github.com/smatimed/selectfromdoc/screenshots/main-screen.png?raw=true)
