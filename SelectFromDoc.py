@@ -1,4 +1,4 @@
-from pandas import read_fwf, read_clipboard
+from pandas import read_fwf, read_json, read_xml, read_clipboard
 import pandas as pd
 from pandasql import sqldf
 import openpyxl
@@ -26,7 +26,7 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.geometry(f'{root_width}x{root_height}+{(screen_width-root_width) // 2}+{(screen_height-root_height) // 2}')
 
-root.title('SQL from Document (Excel, Csv, Text) or Clipboard')
+root.title('SQL from Document (Excel, Csv, Json, Text, Xml) or Clipboard')
 # root.iconbitmap(path.abspath(path.join(path.dirname(__file__), 'SelectFromDoc.ico')))
 root.iconbitmap('SelectFromDoc.ico')
 
@@ -459,11 +459,11 @@ def my_read_csv(csvDocument:str, separator:str=';'):
 
 def browse():
     global docSource, doc
-    result = filedialog.askopenfilename(title="Select a document", filetypes=(("All supported formats", ("*.xlsx", "*.xls", "*.csv", "*.txt")), ("Excel doc", ("*.xlsx", "*.xls")), ("Csv file", "*.csv"), ("Text file (fixed width)", "*.txt"), ("All Files", "*.*")))
+    result = filedialog.askopenfilename(title="Select a document", filetypes=(("All supported formats", ("*.csv", "*.json", "*.txt", "*.xlsx", "*.xls", "*.xml")), ("CSV file", "*.csv"), ("Excel doc", ("*.xlsx", "*.xls")), ("JSON file", "*.json"), ("Text file (fixed width)", "*.txt"), ("XML file", "*.xml"), ("All Files", "*.*")))
 
     if result != '':
         extension = Path(result).suffix.upper()
-        if extension in ('.XLSX', '.XLS', '.CSV', '.TXT'):
+        if extension in ('.CSV', '.JSON', '.TXT', '.XLSX', '.XLS', '.XML'):
             boutonExecuter["state"] = "disabled"
             requete_sql.delete("1.0","end")
             requete_sql.insert(END,"\n   Wait ...")
@@ -471,32 +471,41 @@ def browse():
 
             docSource.set(result)
 
-            # --- open doc
-            # Excel
-            if extension == '.XLSX' or extension == '.XLS':
-                doc = my_read_excel(docSource.get())
-            # Csv
-            elif extension == '.CSV':
-                doc = my_read_csv(docSource.get())
-            # Text
-            elif extension == '.TXT':
-                doc = read_fwf(docSource.get())
-            
-            requete_sql.delete("1.0","end")
+            try:
+                # --- open doc
+                # Excel
+                if extension == '.XLSX' or extension == '.XLS':
+                    doc = my_read_excel(docSource.get())
+                # CSV
+                elif extension == '.CSV':
+                    doc = my_read_csv(docSource.get())
+                # Text
+                elif extension == '.TXT':
+                    doc = read_fwf(docSource.get())
+                # XML
+                elif extension == '.XML':
+                    doc = read_xml(docSource.get())
+                # JSON
+                elif extension == '.JSON':
+                    doc = read_json(docSource.get())
+                
+                requete_sql.delete("1.0","end")
 
-            # if there is a SQL file with the same name we open it automatically
-            sql_file = result.upper().replace(extension,'.sql')
-            if exists(sql_file):
-                requete_sql.insert(END, '-- select '+', '.join(doc.columns)+'\n')
-                # --- lire SQL file
-                with open(sql_file) as f:
-                    for ligne in f:
-                        requete_sql.insert(END,ligne)
-            else:
-                requete_sql.insert(END, 'select '+', '.join(doc.columns)+'\nfrom doc')
+                # if there is a SQL file with the same name we open it automatically
+                sql_file = result.upper().replace(extension,'.sql')
+                if exists(sql_file):
+                    requete_sql.insert(END, '-- select '+', '.join(doc.columns)+'\n')
+                    # --- lire SQL file
+                    with open(sql_file) as f:
+                        for ligne in f:
+                            requete_sql.insert(END,ligne)
+                else:
+                    requete_sql.insert(END, 'select '+', '.join(doc.columns)+'\nfrom doc')
 
-            boutonExecuter["state"] = "normal"
-            boutonExporterResultat["state"] = "disabled"
+                boutonExecuter["state"] = "normal"
+                boutonExporterResultat["state"] = "disabled"
+            except Exception as ErrRead:
+                messagebox.showerror('Reading error', ErrRead)
         else:
             messagebox.showerror('Format error',f"This format '{extension}' is not supported.")
 
@@ -612,31 +621,41 @@ def Exporter():
 
     extension = Path(docSource.get()).suffix.upper()
 
-    # if extension == '':   # clipboard
-    #     extension = '.XXX'
+    lOkExportation = True
 
-    # --- CSV
-    if exportFormat.get() == 'Csv':
-        dest = docSource.get().upper().replace(extension,'_export.csv')
-        df.to_csv(dest, sep=';')
-        messagebox.showinfo("Exportation",f"Exportation done to '{dest}'.")
-    # --- EXCEL
-    elif exportFormat.get() == 'Excel':
-        dest = docSource.get().upper().replace(extension,'_export.xlsx')
-        df.to_excel(dest)
-        messagebox.showinfo("Exportation",f"Exportation done to '{dest}'.")
-    # --- HTML
-    elif exportFormat.get() == 'Html':
-        dest = docSource.get().upper().replace(extension,'_export.html')
-        df.to_html(dest)
-        messagebox.showinfo("Exportation",f"Exportation done to '{dest}'.")
-    # --- TEXT
-    elif exportFormat.get() == 'Text':
-        dest = docSource.get().upper().replace(extension,'_export.txt')
-        df.to_string(dest)
-        messagebox.showinfo("Exportation",f"Exportation done to '{dest}'.")
-    else:
-        messagebox.showwarning("Exportation",'Unknown format for exportation.')
+    try:
+        # --- CSV
+        if exportFormat.get() == 'CSV':
+            dest = docSource.get().upper().replace(extension,'_export.csv')
+            df.to_csv(dest, sep=';')
+        # --- EXCEL
+        elif exportFormat.get() == 'Excel':
+            dest = docSource.get().upper().replace(extension,'_export.xlsx')
+            df.to_excel(dest)
+        # --- HTML
+        elif exportFormat.get() == 'Html':
+            dest = docSource.get().upper().replace(extension,'_export.html')
+            df.to_html(dest)
+        # --- TEXT
+        elif exportFormat.get() == 'Text':
+            dest = docSource.get().upper().replace(extension,'_export.txt')
+            df.to_string(dest)
+        # --- JSON
+        elif exportFormat.get() == 'JSON':
+            dest = docSource.get().upper().replace(extension,'_export.json')
+            df.to_json(dest)
+        # --- XML
+        elif exportFormat.get() == 'XML':
+            dest = docSource.get().upper().replace(extension,'_export.xml')
+            df.to_xml(dest, index=False)
+        else:
+            lOkExportation = False
+            messagebox.showwarning("Exportation",'Unknown format for exportation.')
+
+        if lOkExportation:
+            messagebox.showinfo("Exportation",f"Exportation done to '{dest}'.")
+    except Exception as ErrExport:
+        messagebox.showerror('Exportation error', ErrExport)
 
 # ===========================================================================
 
@@ -752,7 +771,7 @@ lblExport.pack(side=LEFT, padx=10, pady=10)   # , bg=bg_color_default
 
 exportFormat = StringVar()
 exportFormat.set("Excel")
-combo_exportFormat = ttk.Combobox(frame_3, textvariable = exportFormat, width=7, values=('Csv', 'Excel', 'Html', 'Text'), state="readonly")
+combo_exportFormat = ttk.Combobox(frame_3, textvariable = exportFormat, width=7, values=('CSV', 'Excel', 'JSON', 'Html', 'Text', 'XML'), state="readonly")
 combo_exportFormat.pack(side=LEFT)
 
 boutonExporterResultat = ttk.Button(frame_3, text="Export", state="disabled", command=Exporter)

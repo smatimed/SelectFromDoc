@@ -1,5 +1,6 @@
-NOM      PRENOM     DN       MONTANT
-YAHI     AMEL       02111999    2500
-AKLI     SAID       00001947    1520
-HOUFAF   HAMID      15122002   95210
- 
+Code Nom             Prenom           Sexe d_naiss  Salaire
+   1 SMATI           MOHAMED          M    04071967  100000.15
+   2 BENALI          SAID             M    13021980  150000.00
+   3 FATHI           SOUAD            F    00001955   56000.26
+   4 AIT SADI        AHMED ABDELKADER M    26011999  580000.58
+   5 KALFI BENHOUFAF MANAL            F    05032002   71000.00

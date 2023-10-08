@@ -2,6 +2,7 @@
 a.bat
 *.lnk
 *.sql
+ef/
 
 
 # Byte-compiled / optimized / DLL files

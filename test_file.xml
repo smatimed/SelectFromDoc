@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<data>
+  <row>
+    <Code>1</Code>
+    <Nom>SMATI</Nom>
+    <Prenom>MOHAMED</Prenom>
+    <Sexe>M</Sexe>
+    <d_naiss>04071967</d_naiss>
+    <Salaire>100000.15</Salaire>
+  </row>
+  <row>
+    <Code>2</Code>
+    <Nom>BENALI</Nom>
+    <Prenom>SAID</Prenom>
+    <Sexe>M</Sexe>
+    <d_naiss>13021980</d_naiss>
+    <Salaire>150000.0</Salaire>
+  </row>
+  <row>
+    <Code>3</Code>
+    <Nom>FATHI</Nom>
+    <Prenom>SOUAD</Prenom>
+    <Sexe>F</Sexe>
+    <d_naiss>00001955</d_naiss>
+    <Salaire>56000.26</Salaire>
+  </row>
+  <row>
+    <Code>4</Code>
+    <Nom>AIT SADI</Nom>
+    <Prenom>AHMED ABDELKADER</Prenom>
+    <Sexe>M</Sexe>
+    <d_naiss>26011999</d_naiss>
+    <Salaire>580000.58</Salaire>
+  </row>
+  <row>
+    <Code>5</Code>
+    <Nom>KALFI BENHOUFAF</Nom>
+    <Prenom>MANAL</Prenom>
+    <Sexe>F</Sexe>
+    <d_naiss>05032002</d_naiss>
+    <Salaire>71000.0</Salaire>
+  </row>
+</data>
