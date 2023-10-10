@@ -558,12 +558,17 @@ def Executer():
             ligne_valeur = ligne2_valeur = ''
             for ind, colonne in enumerate(df.columns):
                 if len(df) > 0:
-                    if len(colonne) > largeurs[ind]:   # si le nom de la colonne est plus long que sa valeur
-                        largeurs[ind] = len(colonne)
+                    # if len(colonne) > largeurs[ind]:   # si le nom de la colonne est plus long que sa valeur
+                    if len(colonne) > largeurs.iloc[ind]:   # si le nom de la colonne est plus long que sa valeur
+                        # largeurs[ind] = len(colonne)
+                        largeurs.iloc[ind] = len(colonne)
                 else:
-                    largeurs[ind] = len(colonne)
-                ligne_valeur += colonne.ljust(largeurs[ind]) + ' '
-                ligne2_valeur += ''.ljust(largeurs[ind],'-') + ' '
+                    # largeurs[ind] = len(colonne)
+                    largeurs.iloc[ind] = len(colonne)
+                # ligne_valeur += colonne.ljust(largeurs[ind]) + ' '
+                ligne_valeur += colonne.ljust(largeurs.iloc[ind]) + ' '
+                # ligne2_valeur += ''.ljust(largeurs[ind],'-') + ' '
+                ligne2_valeur += ''.ljust(largeurs.iloc[ind],'-') + ' '
             sql_resultat.insert(END, ligne_valeur+'\n')
             sql_resultat.insert(END, ligne2_valeur+'\n')
 
@@ -582,9 +587,9 @@ def Executer():
                 # for Colonne in df.columns:
                 for iColonne in range(len(df.columns)):
                     if alignements[iColonne] == 'G':
-                        ligne_valeur += str(row[df.columns[iColonne]]).ljust(largeurs[iColonne]) +' '
+                        ligne_valeur += str(row[df.columns[iColonne]]).ljust(largeurs.iloc[iColonne]) +' '
                     else:
-                        ligne_valeur += str(row[df.columns[iColonne]]).rjust(largeurs[iColonne]) + ' '
+                        ligne_valeur += str(row[df.columns[iColonne]]).rjust(largeurs.iloc[iColonne]) + ' '
                 sql_resultat.insert(END, ligne_valeur+'\n')
 
             # !!! VERY VERY SLOW
