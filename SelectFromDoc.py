@@ -1,7 +1,10 @@
-from pandas import read_fwf, read_json, read_xml, read_clipboard
 import pandas as pd
+from pandas import read_fwf, read_json, read_xml, read_clipboard
 from pandasql import sqldf
 import openpyxl
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 import tkinter as tk
 from tkinter import *
@@ -32,7 +35,8 @@ root.iconbitmap('SelectFromDoc.ico')
 
 def on_resize(event):
     # Update the size of 'frame_sql_resultat' when the window is resized
-    root.grid_rowconfigure(3, weight=1)
+    numRow_Frame_Sql_Resultat = 4
+    root.grid_rowconfigure(numRow_Frame_Sql_Resultat, weight=1)
     root.grid_columnconfigure(0, weight=1)
 
 
@@ -662,6 +666,45 @@ def Exporter():
     except Exception as ErrExport:
         messagebox.showerror('Exportation error', ErrExport)
 
+
+def displayGraph():
+    global xAxis, yAxis, df
+
+    plt.figure(figsize=(10, 6))
+
+    # Define the width of each bar
+    bar_width = 0.2  ###
+
+    x_positions = np.arange(len(df[df.columns[int(xAxis.get())-1]]))  # Create equally spaced x positions
+
+    print('*'*30)
+    print(int(xAxis.get()))
+    print(df.columns[int(xAxis.get())-1])
+    print(int(yAxis.get()))
+    print(df.columns[int(yAxis.get())-1])
+    print('*'*30)
+    plt.bar(x_positions, df[df.columns[int(yAxis.get())-1]], width=bar_width, label='colonne')
+
+    plt.xlabel('x_label')
+    plt.ylabel('y_label')
+    plt.xticks(x_positions, df[df.columns[int(xAxis.get())-1]])  # Set x-axis labels back to the original non-numeric values
+    plt.title('Titre')
+    plt.legend()
+
+    # Rotate x-axis labels for better readability if needed
+    plt.xticks(rotation=45)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def changerDisplayGraphBar():
+    global frame_2bis, frame_2bis_row
+    if displayGraphBar.get() == 1:
+        frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
+    else:
+        frame_2bis.grid_remove()
+
 # ===========================================================================
 
 
@@ -685,6 +728,7 @@ style.configure('TFrame', background=bg_color_default)
 style.configure('TLabel', foreground=fg_color_default_Label, background=bg_color_default, font=("Helvetica", 10))
 style.configure('TButton', foreground=fg_color_default_Button, background=bg_color_default_Button, font=("Helvetica", 10))
 
+# * --------- Frame 1 : doc source
 # --- docSource
 frame_1 = ttk.Frame(root)
 frame_1.grid(row=current_row, column=0, columnspan=5, sticky='WE')
@@ -708,6 +752,7 @@ boutonSqlAide.pack(side=RIGHT, padx=5)
 current_row += 1
 
 
+# * --------- Frame 2 : requete SQL
 # --- requete_sql
 frame_requete_sql = ttk.Frame(root)
 frame_requete_sql.grid(row=current_row, column=0, columnspan=5, sticky='WE')
@@ -725,7 +770,7 @@ scrollbar_requete_sql_x.config(command=requete_sql.xview)
 scrollbar_requete_sql_y.config(command=requete_sql.yview)
 
 
-# --------- Frame
+# * --------- Frame 3 : bouton Executer
 frame_2 = ttk.Frame(root)
 frame_2.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
@@ -744,9 +789,44 @@ lblTempsExec = ttk.Label(frame_2, textvariable=vTempsExec)
 # lblTempsExec.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblTempsExec.pack(side=LEFT, padx=10, pady=10)
 
+# --- option "Graph"
+displayGraphBar = IntVar()
+option_wordwrap = ttk.Checkbutton(frame_2, text="Graph", variable=displayGraphBar, onvalue=1, offvalue=0, width=6, command=changerDisplayGraphBar)
+ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
+option_wordwrap.configure(style="Custom.TCheckbutton")
+option_wordwrap.pack(side=LEFT)
+
 current_row += 1
 
 
+# * --------- Frame 4 : Graph
+frame_2bis = ttk.Frame(root)
+frame_2bis_row = current_row
+frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
+frame_2bis.grid_remove()
+
+lblXAxis = ttk.Label(frame_2bis, text="x-axis:")
+lblXAxis.pack(side=LEFT, padx=5, pady=10)
+
+xAxis = StringVar(value=1)
+entXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=4)
+entXAxis.pack(side=LEFT, padx=5)
+
+lblYAxis = ttk.Label(frame_2bis, text="y-axis:")
+lblYAxis.pack(side=LEFT, padx=5, pady=10)
+
+yAxis = StringVar(value=2)
+entYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=8)
+entYAxis.pack(side=LEFT, padx=5)
+
+butGraph = ttk.Button(frame_2bis, text='Graph', width=6, command=displayGraph)
+# butGraph = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
+butGraph.pack(side=LEFT, padx=5)
+
+current_row += 1
+
+
+# * --------- Frame 5 : Résultat
 # --- sql_resultat
 frame_sql_resultat = ttk.Frame(root)
 # frame_sql_resultat = ttk.Frame(root, borderwidth=2, relief=GROOVE, height=18)
@@ -765,7 +845,8 @@ sql_resultat.pack(expand=True, fill=BOTH)
 scrollbar_sql_resultat_x.config(command=sql_resultat.xview)
 scrollbar_sql_resultat_y.config(command=sql_resultat.yview)
 
-# --------- Frame
+
+# * --------- Frame 6 : Export
 frame_3 = ttk.Frame(root)
 frame_3.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
