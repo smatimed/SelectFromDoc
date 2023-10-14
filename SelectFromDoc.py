@@ -667,28 +667,63 @@ def Exporter():
         messagebox.showerror('Exportation error', ErrExport)
 
 
-def displayGraph():
-    global xAxis, yAxis, df
+def displayGraph(df: pd.DataFrame, title: str, xAxisNum: str, yAxisNums: str, xLabel: str = None, yLabel: str = None, yLegendLabels: str = None, bar_width=0.2):
+    # global xAxis, yAxis, df
 
-    plt.figure(figsize=(10, 6))
+    # plt.figure(figsize=(10, 6))
+    plt.figure()
 
     # Define the width of each bar
-    bar_width = 0.2  ###
+    # bar_width = 0.2  ###
 
-    x_positions = np.arange(len(df[df.columns[int(xAxis.get())-1]]))  # Create equally spaced x positions
+    columnNameUsed_for_xAxis = df.columns[int(xAxisNum)-1]
+    # print('*** xAxis: ',columnNameUsed_for_xAxis)
 
-    print('*'*30)
-    print(int(xAxis.get()))
-    print(df.columns[int(xAxis.get())-1])
-    print(int(yAxis.get()))
-    print(df.columns[int(yAxis.get())-1])
-    print('*'*30)
-    plt.bar(x_positions, df[df.columns[int(yAxis.get())-1]], width=bar_width, label='colonne')
+    if xLabel is None:
+        xLabel = columnNameUsed_for_xAxis
 
-    plt.xlabel('x_label')
-    plt.ylabel('y_label')
-    plt.xticks(x_positions, df[df.columns[int(xAxis.get())-1]])  # Set x-axis labels back to the original non-numeric values
-    plt.title('Titre')
+    # x_positions = np.arange(len(df[df.columns[int(xAxis.get())-1]]))  # Create equally spaced x positions
+    x_positions = np.arange(len(df[columnNameUsed_for_xAxis]))  # Create equally spaced x positions
+
+    # print('*'*30)
+    # print(int(xAxis.get()))
+    # print(df.columns[int(xAxis.get())-1])
+    # print(int(yAxis.get()))
+    # print(df.columns[int(yAxis.get())-1])
+    # print('*'*30)
+
+    # plt.bar(x_positions, df[df.columns[int(yAxis.get())-1]], width=bar_width, label='colonne')
+
+    columnsNamesUsed_for_yAxis = [df.columns[int(x)-1] for x in yAxisNums.split(',')]
+    # print('*** yAxis:',columnsNamesUsed_for_yAxis)
+
+
+    lGenerate_yLabel = False
+    if yLabel is None:
+        lGenerate_yLabel = True
+    
+    lGenerate_yLegendLabels = False
+    if yLegendLabels is None:
+        lGenerate_yLegendLabels = True
+    
+    if lGenerate_yLabel or lGenerate_yLegendLabels:
+        valForLabel = ''
+        for colName in columnsNamesUsed_for_yAxis:
+            valForLabel += ('' if valForLabel == '' else ',') + colName
+        if lGenerate_yLabel:
+            yLabel = valForLabel
+        if lGenerate_yLegendLabels:
+            yLegendLabels = valForLabel
+        
+    columnsLegenUsed_for_yAxis = [x for x in yLegendLabels.split(',')]
+
+    for i, colName in enumerate(columnsNamesUsed_for_yAxis):
+        plt.bar(x_positions + i*bar_width, df[colName], width=bar_width, label=columnsLegenUsed_for_yAxis[i])
+
+    plt.xlabel(xLabel)
+    plt.ylabel(yLabel)
+    plt.xticks(x_positions, df[columnNameUsed_for_xAxis])  # Set x-axis labels back to the original non-numeric values
+    plt.title(title)
     plt.legend()
 
     # Rotate x-axis labels for better readability if needed
@@ -716,7 +751,9 @@ root.grid_columnconfigure(0, weight=1)   # makes the widgets with sticky='WE' fi
 
 # Colors
 bg_color_default = "#b7cbf3"
+bg_color_default_GraphBar = "#31579D" #"#6b84b6"
 fg_color_default_Label = "#31579D"
+fg_color_default_Label_GraphBar = "#b7cbf3"
 fg_color_default_Label_ShortcutKey = "maroon"
 fg_color_default_Label_Copyright = "gray"
 bg_color_default_Button = "#31579D"
@@ -725,7 +762,9 @@ fg_color_default_Button = "#31579D"
 # --- Default styles
 style = ttk.Style()
 style.configure('TFrame', background=bg_color_default)
+style.configure('GraphBar.TFrame', background=bg_color_default_GraphBar)
 style.configure('TLabel', foreground=fg_color_default_Label, background=bg_color_default, font=("Helvetica", 10))
+style.configure('GraphBar.TLabel', foreground=fg_color_default_Label_GraphBar, background=bg_color_default_GraphBar, font=("Helvetica", 10))
 style.configure('TButton', foreground=fg_color_default_Button, background=bg_color_default_Button, font=("Helvetica", 10))
 
 # * --------- Frame 1 : doc source
@@ -800,12 +839,13 @@ current_row += 1
 
 
 # * --------- Frame 4 : Graph
-frame_2bis = ttk.Frame(root)
+frame_2bis = ttk.Frame(root, style='GraphBar.TFrame')
 frame_2bis_row = current_row
 frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
 frame_2bis.grid_remove()
 
 lblXAxis = ttk.Label(frame_2bis, text="x-axis:")
+lblXAxis.configure(style='GraphBar.TLabel')
 lblXAxis.pack(side=LEFT, padx=5, pady=10)
 
 xAxis = StringVar(value=1)
@@ -813,13 +853,15 @@ entXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=4)
 entXAxis.pack(side=LEFT, padx=5)
 
 lblYAxis = ttk.Label(frame_2bis, text="y-axis:")
+lblYAxis.configure(style='GraphBar.TLabel')
 lblYAxis.pack(side=LEFT, padx=5, pady=10)
 
 yAxis = StringVar(value=2)
 entYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=8)
 entYAxis.pack(side=LEFT, padx=5)
 
-butGraph = ttk.Button(frame_2bis, text='Graph', width=6, command=displayGraph)
+butGraph = ttk.Button(frame_2bis, text='Graph', width=6, command= lambda: displayGraph(df, 'Mon Titre', xAxis.get(), yAxis.get()))
+
 # butGraph = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
 butGraph.pack(side=LEFT, padx=5)
 
