@@ -1,5 +1,5 @@
 # SelectFromDoc
-This program lets you select data from documents (Excel, CSV, JSON, Text, XML) or clipboard using SQL language.
+This program lets you select data from documents (Excel, CSV, JSON, Text, XML) or clipboard using SQL language, with the possibility to visualize data in charts.
 
 
 ## Cloning the repository
@@ -23,7 +23,7 @@ Create the virtual environment:
 set pipenv_venv_in_project=1
 pipenv install
 ```
-The requirements, stored in the file 'Pipfile', (pandas, pandasql, openpyxl, lxml) will be automatically installed
+The requirements, stored in the file 'Pipfile', (pandas, pandasql, openpyxl, lxml, matplotlib) will be automatically installed.
 
 - Activate the virtual environment :
 ```

@@ -29,9 +29,10 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.geometry(f'{root_width}x{root_height}+{(screen_width-root_width) // 2}+{(screen_height-root_height) // 2}')
 
-root.title('SQL from Document (Excel, Csv, Json, Text, Xml) or Clipboard')
+root.title('Select From Document (Excel, Csv, Json, Text, Xml) or Clipboard')
 # root.iconbitmap(path.abspath(path.join(path.dirname(__file__), 'SelectFromDoc.ico')))
 root.iconbitmap('SelectFromDoc.ico')
+
 
 def on_resize(event):
     # Update the size of 'frame_sql_resultat' when the window is resized
@@ -668,35 +669,19 @@ def Exporter():
 
 
 def displayGraph(df: pd.DataFrame, title: str, xAxisNum: str, yAxisNums: str, xLabel: str = None, yLabel: str = None, yLegendLabels: str = None, bar_width=0.2):
-    # global xAxis, yAxis, df
 
     # plt.figure(figsize=(10, 6))
     plt.figure()
-
-    # Define the width of each bar
-    # bar_width = 0.2  ###
+    # fig, ax = plt.subplots()
 
     columnNameUsed_for_xAxis = df.columns[int(xAxisNum)-1]
-    # print('*** xAxis: ',columnNameUsed_for_xAxis)
 
     if xLabel is None:
         xLabel = columnNameUsed_for_xAxis
 
-    # x_positions = np.arange(len(df[df.columns[int(xAxis.get())-1]]))  # Create equally spaced x positions
     x_positions = np.arange(len(df[columnNameUsed_for_xAxis]))  # Create equally spaced x positions
 
-    # print('*'*30)
-    # print(int(xAxis.get()))
-    # print(df.columns[int(xAxis.get())-1])
-    # print(int(yAxis.get()))
-    # print(df.columns[int(yAxis.get())-1])
-    # print('*'*30)
-
-    # plt.bar(x_positions, df[df.columns[int(yAxis.get())-1]], width=bar_width, label='colonne')
-
-    columnsNamesUsed_for_yAxis = [df.columns[int(x)-1] for x in yAxisNums.split(',')]
-    # print('*** yAxis:',columnsNamesUsed_for_yAxis)
-
+    columnsNamesUsed_for_yAxis = [df.columns[int(x)-1] for x in yAxisNums.split(',') if x!='']
 
     lGenerate_yLabel = False
     if yLabel is None:
@@ -730,6 +715,16 @@ def displayGraph(df: pd.DataFrame, title: str, xAxisNum: str, yAxisNums: str, xL
     plt.xticks(rotation=45)
 
     plt.tight_layout()
+    # plt.subplots_adjust(left=0.2, right=0.8, top=0.8, bottom=0.2)
+
+    fig = plt.gcf()
+    fig_width, fig_height = fig.get_size_inches()
+    pos_x = int((screen_width - fig_width * fig.dpi) / 2)
+    pos_y = int((screen_height - fig_height * fig.dpi) / 2)
+
+    # Set the position
+    plt.get_current_fig_manager().window.wm_geometry(f"+{pos_x}+{pos_y}")
+
     plt.show()
 
 
@@ -740,7 +735,63 @@ def changerDisplayGraphBar():
     else:
         frame_2bis.grid_remove()
 
-# ===========================================================================
+
+def isOk_value_xAxis(valeur):
+    global df
+    if valeur.isdigit():
+        if int(valeur) <= len(df.columns) and valeur not in yAxis.get().split(','):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+def on_validate_xAxis(valeur):
+    if valeur == '':
+        lOkValeur = True
+    else:
+        lOkValeur = isOk_value_xAxis(valeur)
+
+    if valeur != '' and lOkValeur and isOk_value_yAxis(yAxis.get()):
+        boutonVisualisation["state"] = "normal"
+    else:
+        boutonVisualisation["state"] = "disabled"
+
+    return lOkValeur
+
+
+validate_xAxis = root.register(on_validate_xAxis)
+
+
+def isOk_value_yAxis(valeur):
+    global df
+    lAllOk = True
+    if valeur != '':
+        for val in valeur.split(','):
+            if val != '':
+                if not val.isdigit() or int(val) > len(df.columns) or val == xAxis.get():
+                    lAllOk = False
+    return lAllOk
+
+def on_validate_yAxis(valeur):
+    if valeur == '':
+        lOkValeur = True
+    else:
+        lOkValeur = isOk_value_yAxis(valeur)
+    
+    if isOk_value_xAxis(xAxis.get()) and valeur != '' and lOkValeur:
+        boutonVisualisation["state"] = "normal"
+    else:
+        boutonVisualisation["state"] = "disabled"
+
+    return lOkValeur
+
+validate_yAxis = root.register(on_validate_yAxis)
+
+
+# * ===========================================================================
+# * ===========================================================================
+# * ===========================================================================
 
 
 global doc
@@ -830,7 +881,7 @@ lblTempsExec.pack(side=LEFT, padx=10, pady=10)
 
 # --- option "Graph"
 displayGraphBar = IntVar()
-option_wordwrap = ttk.Checkbutton(frame_2, text="Graph", variable=displayGraphBar, onvalue=1, offvalue=0, width=6, command=changerDisplayGraphBar)
+option_wordwrap = ttk.Checkbutton(frame_2, text="Chart toolbar", variable=displayGraphBar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphBar)
 ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
 option_wordwrap.configure(style="Custom.TCheckbutton")
 option_wordwrap.pack(side=LEFT)
@@ -844,26 +895,35 @@ frame_2bis_row = current_row
 frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
 frame_2bis.grid_remove()
 
-lblXAxis = ttk.Label(frame_2bis, text="x-axis:")
+lblXAxis = ttk.Label(frame_2bis, text="x-axis column:")
 lblXAxis.configure(style='GraphBar.TLabel')
 lblXAxis.pack(side=LEFT, padx=5, pady=10)
 
-xAxis = StringVar(value=1)
-entXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=4)
+# xAxis = StringVar(value=1)
+xAxis = StringVar()
+entXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=4, validate="key", validatecommand=(validate_xAxis, '%P'))
 entXAxis.pack(side=LEFT, padx=5)
 
-lblYAxis = ttk.Label(frame_2bis, text="y-axis:")
+lblYAxis = ttk.Label(frame_2bis, text="y-axis columns (,):")
 lblYAxis.configure(style='GraphBar.TLabel')
 lblYAxis.pack(side=LEFT, padx=5, pady=10)
 
-yAxis = StringVar(value=2)
-entYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=8)
+# yAxis = StringVar(value=2)
+yAxis = StringVar()
+entYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=8, validate="key", validatecommand=(validate_yAxis, '%P'))
 entYAxis.pack(side=LEFT, padx=5)
 
-butGraph = ttk.Button(frame_2bis, text='Graph', width=6, command= lambda: displayGraph(df, 'Mon Titre', xAxis.get(), yAxis.get()))
+lblTitre = ttk.Label(frame_2bis, text="Title:")
+lblTitre.configure(style='GraphBar.TLabel')
+lblTitre.pack(side=LEFT, padx=5)
 
-# butGraph = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
-butGraph.pack(side=LEFT, padx=5)
+Titre = StringVar()
+entTitre = ttk.Entry(frame_2bis, textvariable=Titre, width=15)
+entTitre.pack(side=LEFT, padx=5)
+
+boutonVisualisation = ttk.Button(frame_2bis, text='Visualization', state="disabled", width=12, command= lambda: displayGraph(df, Titre.get(), xAxis.get(), yAxis.get()))
+# boutonVisualisation = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
+boutonVisualisation.pack(side=LEFT, padx=5)
 
 current_row += 1
 
