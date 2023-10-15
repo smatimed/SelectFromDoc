@@ -23,7 +23,7 @@ from os.path import exists
 from pathlib import Path
 
 root = Tk()
-root_width = 800
+root_width = 900
 root_height = 600
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
@@ -509,6 +509,7 @@ def browse():
 
                 boutonExecuter["state"] = "normal"
                 boutonExporterResultat["state"] = "disabled"
+                option_displayGraphBar["state"] = "disabled"
             except Exception as ErrRead:
                 messagebox.showerror('Reading error', ErrRead)
         else:
@@ -534,6 +535,7 @@ def sourceFromClipboard():
 
         boutonExecuter["state"] = "normal"
         boutonExporterResultat["state"] = "disabled"
+        option_displayGraphBar["state"] = "disabled"
 
     except pd.errors.EmptyDataError:
         requete_sql.delete("1.0","end")
@@ -614,6 +616,7 @@ def Executer():
             vTempsExec.set(f"{len(df)} record{s}  (in {dureeExec:.2f} s)")
 
             boutonExporterResultat["state"] = "normal"
+            option_displayGraphBar["state"] = "normal"
 
             # --- enregistrer la requête dans un fichier TEMP
             with open('last_request.sql','w') as f:
@@ -702,14 +705,48 @@ def displayGraph(df: pd.DataFrame, title: str, xAxisNum: str, yAxisNums: str, xL
         
     columnsLegenUsed_for_yAxis = [x for x in yLegendLabels.split(',')]
 
+    graphType = 'bar'
+
     for i, colName in enumerate(columnsNamesUsed_for_yAxis):
-        plt.bar(x_positions + i*bar_width, df[colName], width=bar_width, label=columnsLegenUsed_for_yAxis[i])
+        valLabel = columnsLegenUsed_for_yAxis[i] if i < len(columnsLegenUsed_for_yAxis) else ''
+        match graphType:
+            case 'bar':
+                plt.bar(x_positions + i*bar_width, df[colName], width=bar_width, label=valLabel)
+            case 'plot':
+                plt.plot(x_positions + i*bar_width, df[colName], label=valLabel)
+        # if i >= len(columnsLegenUsed_for_yAxis) Then the Legend is empty or doesn't contain sufficient elements
+
+    """
+    # --- Bar Chart
+    plt.bar(x_positions, df['NOMBRE'], width=bar_width, label='Nbre')
+    plt.bar(x_positions + bar_width, df['MONTANT'], width=bar_width, label='Mont')
+
+    # --- Line Chart
+    plt.plot(x_positions, df['NOMBRE'], label='Nbre')
+    plt.plot(x_positions + bar_width, df['MONTANT'], label='Mont')
+
+    # --- Scatter Plot
+    plt.scatter(x_positions, df['NOMBRE'], label='Nbre')
+    plt.scatter(x_positions + bar_width, df['MONTANT'], label='Mont')
+
+    # --- Pie Chart
+    plt.pie(df['NOMBRE'], labels=df['CATEGORIE'], autopct='%1.1f%%')
+
+    # --- Area Chart
+    plt.fill_between(x_positions, df['NOMBRE'], color="skyblue", alpha=0.4)
+    plt.plot(x_positions, df['NOMBRE'], color="Slateblue", alpha=0.6, label='Nbre')
+
+    plt.fill_between(x_positions, df['MONTANT'], color="lightgreen", alpha=0.4)
+    plt.plot(x_positions, df['MONTANT'], color="green", alpha=0.6, label='Mont')
+    """
 
     plt.xlabel(xLabel)
     plt.ylabel(yLabel)
     plt.xticks(x_positions, df[columnNameUsed_for_xAxis])  # Set x-axis labels back to the original non-numeric values
     plt.title(title)
-    plt.legend()
+
+    if yLegendLabels != '':
+        plt.legend()
 
     # Rotate x-axis labels for better readability if needed
     plt.xticks(rotation=45)
@@ -754,6 +791,8 @@ def on_validate_xAxis(valeur):
 
     if valeur != '' and lOkValeur and isOk_value_yAxis(yAxis.get()):
         boutonVisualisation["state"] = "normal"
+        # set x-Label
+        XLabel.set(df.columns[int(valeur)-1])
     else:
         boutonVisualisation["state"] = "disabled"
 
@@ -781,6 +820,12 @@ def on_validate_yAxis(valeur):
     
     if isOk_value_xAxis(xAxis.get()) and valeur != '' and lOkValeur:
         boutonVisualisation["state"] = "normal"
+        # set y-Label & Legend
+        val_y_label = ''
+        for colName in [df.columns[int(x)-1] for x in valeur.split(',') if x!='']:
+            val_y_label += ('' if val_y_label == '' else ',') + colName
+        YLabel.set(val_y_label)
+        Legend.set(val_y_label)
     else:
         boutonVisualisation["state"] = "disabled"
 
@@ -823,15 +868,15 @@ style.configure('TButton', foreground=fg_color_default_Button, background=bg_col
 frame_1 = ttk.Frame(root)
 frame_1.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
-lbl_path = ttk.Label(frame_1, text="Source Document:")
-# lbl_path.configure(foreground=fg_color_default_Label, background=bg_color_default)
-lbl_path.pack(side=LEFT, padx=5, pady=10)
+lblPath = ttk.Label(frame_1, text="Source Document:")
+# lblPath.configure(foreground=fg_color_default_Label, background=bg_color_default)
+lblPath.pack(side=LEFT, padx=5, pady=10)
 
 docSource = StringVar()
-ent_path = ttk.Entry(frame_1, textvariable=docSource, width=70)
-ent_path.pack(side=LEFT, padx=5)
-but_path = ttk.Button(frame_1, text='...', width=3, command=browse)
-but_path.pack(side=LEFT)
+entryPath = ttk.Entry(frame_1, textvariable=docSource, width=70)
+entryPath.pack(side=LEFT, padx=5)
+boutonPath = ttk.Button(frame_1, text='...', width=3, command=browse)
+boutonPath.pack(side=LEFT)
 
 boutonFromClipboard = ttk.Button(frame_1, text='From clipboard', command=sourceFromClipboard)
 boutonFromClipboard.pack(side=LEFT, padx=15)
@@ -881,10 +926,10 @@ lblTempsExec.pack(side=LEFT, padx=10, pady=10)
 
 # --- option "Graph"
 displayGraphBar = IntVar()
-option_wordwrap = ttk.Checkbutton(frame_2, text="Chart toolbar", variable=displayGraphBar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphBar)
+option_displayGraphBar = ttk.Checkbutton(frame_2, text="Chart toolbar", state="disabled", variable=displayGraphBar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphBar)
 ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
-option_wordwrap.configure(style="Custom.TCheckbutton")
-option_wordwrap.pack(side=LEFT)
+option_displayGraphBar.configure(style="Custom.TCheckbutton")
+option_displayGraphBar.pack(side=RIGHT,padx=10)
 
 current_row += 1
 
@@ -895,33 +940,65 @@ frame_2bis_row = current_row
 frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
 frame_2bis.grid_remove()
 
+# --- x-axis
 lblXAxis = ttk.Label(frame_2bis, text="x-axis column:")
 lblXAxis.configure(style='GraphBar.TLabel')
-lblXAxis.pack(side=LEFT, padx=5, pady=10)
+lblXAxis.pack(side=LEFT, padx=5, pady=6)
 
 # xAxis = StringVar(value=1)
 xAxis = StringVar()
-entXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=4, validate="key", validatecommand=(validate_xAxis, '%P'))
-entXAxis.pack(side=LEFT, padx=5)
+entryXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=3, validate="key", validatecommand=(validate_xAxis, '%P'))
+entryXAxis.pack(side=LEFT) #, padx=5)
 
+# --- y-axis
 lblYAxis = ttk.Label(frame_2bis, text="y-axis columns (,):")
 lblYAxis.configure(style='GraphBar.TLabel')
-lblYAxis.pack(side=LEFT, padx=5, pady=10)
+lblYAxis.pack(side=LEFT, padx=5) #, pady=10)
 
 # yAxis = StringVar(value=2)
 yAxis = StringVar()
-entYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=8, validate="key", validatecommand=(validate_yAxis, '%P'))
-entYAxis.pack(side=LEFT, padx=5)
+entryYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=6, validate="key", validatecommand=(validate_yAxis, '%P'))
+entryYAxis.pack(side=LEFT) #, padx=5)
 
+# --- Title
 lblTitre = ttk.Label(frame_2bis, text="Title:")
 lblTitre.configure(style='GraphBar.TLabel')
 lblTitre.pack(side=LEFT, padx=5)
 
 Titre = StringVar()
-entTitre = ttk.Entry(frame_2bis, textvariable=Titre, width=15)
-entTitre.pack(side=LEFT, padx=5)
+entryTitre = ttk.Entry(frame_2bis, textvariable=Titre, width=10)
+entryTitre.pack(side=LEFT) #, padx=5)
 
-boutonVisualisation = ttk.Button(frame_2bis, text='Visualization', state="disabled", width=12, command= lambda: displayGraph(df, Titre.get(), xAxis.get(), yAxis.get()))
+# --- x-Label
+lblXLabel = ttk.Label(frame_2bis, text="x-label:")
+lblXLabel.configure(style='GraphBar.TLabel')
+lblXLabel.pack(side=LEFT, padx=5)
+
+XLabel = StringVar()
+entryXLabel = ttk.Entry(frame_2bis, textvariable=XLabel, width=10)
+entryXLabel.pack(side=LEFT) #, padx=5)
+
+# --- y-Label
+lblYLabel = ttk.Label(frame_2bis, text="y-label:")
+lblYLabel.configure(style='GraphBar.TLabel')
+lblYLabel.pack(side=LEFT, padx=5)
+
+YLabel = StringVar()
+entryYLabel = ttk.Entry(frame_2bis, textvariable=YLabel, width=10)
+entryYLabel.pack(side=LEFT) #, padx=5)
+
+# --- Legend
+lblLegend = ttk.Label(frame_2bis, text="Legend (,):")
+lblLegend.configure(style='GraphBar.TLabel')
+lblLegend.pack(side=LEFT, padx=5)
+
+Legend = StringVar()
+entryLegend = ttk.Entry(frame_2bis, textvariable=Legend, width=10)
+entryLegend.pack(side=LEFT) #, padx=5)
+
+
+# --- Visualization button
+boutonVisualisation = ttk.Button(frame_2bis, text='Visualization', state="disabled", width=12, command= lambda: displayGraph(df, Titre.get(), xAxis.get(), yAxis.get(), XLabel.get(), YLabel.get(), Legend.get()))
 # boutonVisualisation = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
 boutonVisualisation.pack(side=LEFT, padx=5)
 
@@ -966,7 +1043,7 @@ boutonExporterResultat = ttk.Button(frame_3, text="Export", state="disabled", co
 boutonExporterResultat.pack(side=LEFT, padx=10)
 
 # --- bouton Quit
-boutonFermer = ttk.Button(frame_3, text="Quit", command=root.quit)
+boutonFermer = ttk.Button(frame_3, text="Quit", width=6, command=root.quit)
 boutonFermer.pack(side=RIGHT, padx=10)
 
 current_row += 1
