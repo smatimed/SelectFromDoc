@@ -23,7 +23,7 @@ from os.path import exists
 from pathlib import Path
 
 root = Tk()
-root_width = 900
+root_width = 980
 root_height = 600
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
@@ -32,6 +32,28 @@ root.geometry(f'{root_width}x{root_height}+{(screen_width-root_width) // 2}+{(sc
 root.title('Select From Document (Excel, Csv, Json, Text, Xml) or Clipboard')
 # root.iconbitmap(path.abspath(path.join(path.dirname(__file__), 'SelectFromDoc.ico')))
 root.iconbitmap('SelectFromDoc.ico')
+
+
+class Tooltip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event):
+        self.tooltip_window = tk.Toplevel(self.widget)
+        x, y, _, _ = self.widget.bbox("insert")
+        x = self.widget.winfo_rootx() + x
+        y = self.widget.winfo_rooty() + y + 25
+        self.tooltip_window.wm_overrideredirect(True)
+        self.tooltip_window.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(self.tooltip_window, text=self.text, justify='left', background="#f8f8b1", relief='solid', borderwidth=1)   # old: ffffe0
+        label.pack(ipadx=1)
+
+    def hide_tooltip(self, event):
+        if hasattr(self, 'tooltip_window'):
+            self.tooltip_window.destroy()
 
 
 def on_resize(event):
@@ -671,7 +693,7 @@ def Exporter():
         messagebox.showerror('Exportation error', ErrExport)
 
 
-def displayGraph(df: pd.DataFrame, title: str, xAxisNum: str, yAxisNums: str, xLabel: str = None, yLabel: str = None, yLegendLabels: str = None, bar_width=0.2):
+def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yAxisNums: str, xLabel: str = None, yLabel: str = None, yLegendLabels: str = None, bar_width=0.4):
 
     # plt.figure(figsize=(10, 6))
     plt.figure()
@@ -705,21 +727,30 @@ def displayGraph(df: pd.DataFrame, title: str, xAxisNum: str, yAxisNums: str, xL
         
     columnsLegenUsed_for_yAxis = [x for x in yLegendLabels.split(',')]
 
-    graphType = 'bar'
-
     for i, colName in enumerate(columnsNamesUsed_for_yAxis):
         valLabel = columnsLegenUsed_for_yAxis[i] if i < len(columnsLegenUsed_for_yAxis) else ''
         match graphType:
-            case 'bar':
+            case 'Bar':
                 plt.bar(x_positions + i*bar_width, df[colName], width=bar_width, label=valLabel)
-            case 'plot':
+            case 'Barh':
+                plt.barh(x_positions + i*bar_width, df[colName], height=bar_width, label=valLabel)
+            case 'Line':
                 plt.plot(x_positions + i*bar_width, df[colName], label=valLabel)
+            case 'Pie':
+                plt.pie(df[colName], labels=x_positions, autopct='%1.1f%%')
+                # plt.pie(df['NOMBRE'], labels=df['CATEGORIE'], autopct='%1.1f%%')
+            case 'Scatter':
+                plt.scatter(x_positions + i*bar_width, df[colName], label=valLabel)
         # if i >= len(columnsLegenUsed_for_yAxis) Then the Legend is empty or doesn't contain sufficient elements
 
     """
     # --- Bar Chart
     plt.bar(x_positions, df['NOMBRE'], width=bar_width, label='Nbre')
     plt.bar(x_positions + bar_width, df['MONTANT'], width=bar_width, label='Mont')
+
+    # --- Bar Horizental Chart
+    plt.barh(x_positions, df['NOMBRE'], height=bar_width, label='Nbre')
+    plt.barh(x_positions + bar_width, df['MONTANT'], height=bar_width, label='Mont')
 
     # --- Line Chart
     plt.plot(x_positions, df['NOMBRE'], label='Nbre')
@@ -740,8 +771,12 @@ def displayGraph(df: pd.DataFrame, title: str, xAxisNum: str, yAxisNums: str, xL
     plt.plot(x_positions, df['MONTANT'], color="green", alpha=0.6, label='Mont')
     """
 
-    plt.xlabel(xLabel)
-    plt.ylabel(yLabel)
+    if graphType != 'Barh':
+        plt.xlabel(xLabel)
+        plt.ylabel(yLabel)
+    else:
+        plt.xlabel(yLabel)
+        plt.ylabel(xLabel)
     plt.xticks(x_positions, df[columnNameUsed_for_xAxis])  # Set x-axis labels back to the original non-numeric values
     plt.title(title)
 
@@ -876,9 +911,12 @@ docSource = StringVar()
 entryPath = ttk.Entry(frame_1, textvariable=docSource, width=70)
 entryPath.pack(side=LEFT, padx=5)
 boutonPath = ttk.Button(frame_1, text='...', width=3, command=browse)
+Tooltip(boutonPath, "Click here to select a document")
 boutonPath.pack(side=LEFT)
 
+
 boutonFromClipboard = ttk.Button(frame_1, text='From clipboard', command=sourceFromClipboard)
+Tooltip(boutonFromClipboard, "Click here to use data from clipboard")
 boutonFromClipboard.pack(side=LEFT, padx=15)
 
 boutonSqlAide = ttk.Button(frame_1, text='SQL help', width=8, command=ouvrir_Sql_Aide)
@@ -924,12 +962,30 @@ lblTempsExec = ttk.Label(frame_2, textvariable=vTempsExec)
 # lblTempsExec.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblTempsExec.pack(side=LEFT, padx=10, pady=10)
 
+# --- bouton Quit
+boutonFermer = ttk.Button(frame_2, text="Quit", width=6, command=root.quit)
+boutonFermer.pack(side=RIGHT, padx=10)
+
 # --- option "Graph"
 displayGraphBar = IntVar()
 option_displayGraphBar = ttk.Checkbutton(frame_2, text="Chart toolbar", state="disabled", variable=displayGraphBar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphBar)
 ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
 option_displayGraphBar.configure(style="Custom.TCheckbutton")
-option_displayGraphBar.pack(side=RIGHT,padx=10)
+Tooltip(option_displayGraphBar, "Display chart toolbar to visualize data")
+option_displayGraphBar.pack(side=RIGHT,padx=20)
+
+# --- Export
+boutonExporterResultat = ttk.Button(frame_2, text="Export", state="disabled", command=Exporter)
+boutonExporterResultat.pack(side=RIGHT, padx=10)
+
+exportFormat = StringVar()
+exportFormat.set("Excel")
+combo_exportFormat = ttk.Combobox(frame_2, textvariable = exportFormat, width=7, values=('CSV', 'Excel', 'JSON', 'Html', 'Text', 'XML'), state="readonly")
+combo_exportFormat.pack(side=RIGHT)
+
+lblExport = ttk.Label(frame_2,text="Export format:")
+# lblExport.configure(foreground=fg_color_default_Label, background=bg_color_default)
+lblExport.pack(side=RIGHT, padx=10, pady=10)   # , bg=bg_color_default
 
 current_row += 1
 
@@ -940,14 +996,25 @@ frame_2bis_row = current_row
 frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
 frame_2bis.grid_remove()
 
+# --- Graph type
+lblGraphType = ttk.Label(frame_2bis, text="Type:")
+lblGraphType.configure(style='GraphBar.TLabel')
+lblGraphType.pack(side=LEFT, padx=5, pady=6)
+
+graphType = StringVar()
+graphType.set("Bar")
+combo_graphType = ttk.Combobox(frame_2bis, textvariable=graphType, width=6, values=('Area', 'Bar', 'Barh', 'Line', 'Pie', 'Scatter'), state="readonly")
+combo_graphType.pack(side=LEFT)
+
 # --- x-axis
 lblXAxis = ttk.Label(frame_2bis, text="x-axis column:")
 lblXAxis.configure(style='GraphBar.TLabel')
-lblXAxis.pack(side=LEFT, padx=5, pady=6)
+lblXAxis.pack(side=LEFT, padx=5)
 
 # xAxis = StringVar(value=1)
 xAxis = StringVar()
 entryXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=3, validate="key", validatecommand=(validate_xAxis, '%P'))
+Tooltip(entryXAxis, "Number of the column to use in X axis")
 entryXAxis.pack(side=LEFT) #, padx=5)
 
 # --- y-axis
@@ -958,6 +1025,7 @@ lblYAxis.pack(side=LEFT, padx=5) #, pady=10)
 # yAxis = StringVar(value=2)
 yAxis = StringVar()
 entryYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=6, validate="key", validatecommand=(validate_yAxis, '%P'))
+Tooltip(entryYAxis, "Number(s) of the column(s) to use in Y axis\nseparated by ',' if there is more than one")
 entryYAxis.pack(side=LEFT) #, padx=5)
 
 # --- Title
@@ -967,6 +1035,7 @@ lblTitre.pack(side=LEFT, padx=5)
 
 Titre = StringVar()
 entryTitre = ttk.Entry(frame_2bis, textvariable=Titre, width=10)
+Tooltip(entryTitre, "Title of the chart\n(empty = no title)")
 entryTitre.pack(side=LEFT) #, padx=5)
 
 # --- x-Label
@@ -976,6 +1045,7 @@ lblXLabel.pack(side=LEFT, padx=5)
 
 XLabel = StringVar()
 entryXLabel = ttk.Entry(frame_2bis, textvariable=XLabel, width=10)
+Tooltip(entryXLabel, "Label for X axis\n(empty = no label)")
 entryXLabel.pack(side=LEFT) #, padx=5)
 
 # --- y-Label
@@ -985,6 +1055,7 @@ lblYLabel.pack(side=LEFT, padx=5)
 
 YLabel = StringVar()
 entryYLabel = ttk.Entry(frame_2bis, textvariable=YLabel, width=10)
+Tooltip(entryYLabel, "Label for Y axis\n(empty = no label)")
 entryYLabel.pack(side=LEFT) #, padx=5)
 
 # --- Legend
@@ -994,11 +1065,12 @@ lblLegend.pack(side=LEFT, padx=5)
 
 Legend = StringVar()
 entryLegend = ttk.Entry(frame_2bis, textvariable=Legend, width=10)
+Tooltip(entryLegend, "Legend for column(s) used for Y axis\nseparated by ',' if there is more than one\n(empty = no legend)")
 entryLegend.pack(side=LEFT) #, padx=5)
 
 
 # --- Visualization button
-boutonVisualisation = ttk.Button(frame_2bis, text='Visualization', state="disabled", width=12, command= lambda: displayGraph(df, Titre.get(), xAxis.get(), yAxis.get(), XLabel.get(), YLabel.get(), Legend.get()))
+boutonVisualisation = ttk.Button(frame_2bis, text='Visualization', state="disabled", width=12, command= lambda: displayGraph(df, graphType.get(), Titre.get(), xAxis.get(), yAxis.get(), XLabel.get(), YLabel.get(), Legend.get()))
 # boutonVisualisation = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
 boutonVisualisation.pack(side=LEFT, padx=5)
 
@@ -1026,27 +1098,27 @@ scrollbar_sql_resultat_y.config(command=sql_resultat.yview)
 
 
 # * --------- Frame 6 : Export
-frame_3 = ttk.Frame(root)
-frame_3.grid(row=current_row, column=0, columnspan=5, sticky='WE')
+# frame_3 = ttk.Frame(root)
+# frame_3.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
-# --- Export
-lblExport = ttk.Label(frame_3,text="Export format:")
-# lblExport.configure(foreground=fg_color_default_Label, background=bg_color_default)
-lblExport.pack(side=LEFT, padx=10, pady=10)   # , bg=bg_color_default
+# # --- Export
+# lblExport = ttk.Label(frame_3,text="Export format:")
+# # lblExport.configure(foreground=fg_color_default_Label, background=bg_color_default)
+# lblExport.pack(side=LEFT, padx=10, pady=10)   # , bg=bg_color_default
 
-exportFormat = StringVar()
-exportFormat.set("Excel")
-combo_exportFormat = ttk.Combobox(frame_3, textvariable = exportFormat, width=7, values=('CSV', 'Excel', 'JSON', 'Html', 'Text', 'XML'), state="readonly")
-combo_exportFormat.pack(side=LEFT)
+# exportFormat = StringVar()
+# exportFormat.set("Excel")
+# combo_exportFormat = ttk.Combobox(frame_3, textvariable = exportFormat, width=7, values=('CSV', 'Excel', 'JSON', 'Html', 'Text', 'XML'), state="readonly")
+# combo_exportFormat.pack(side=LEFT)
 
-boutonExporterResultat = ttk.Button(frame_3, text="Export", state="disabled", command=Exporter)
-boutonExporterResultat.pack(side=LEFT, padx=10)
+# boutonExporterResultat = ttk.Button(frame_3, text="Export", state="disabled", command=Exporter)
+# boutonExporterResultat.pack(side=LEFT, padx=10)
 
-# --- bouton Quit
-boutonFermer = ttk.Button(frame_3, text="Quit", width=6, command=root.quit)
-boutonFermer.pack(side=RIGHT, padx=10)
+# # --- bouton Quit
+# boutonFermer = ttk.Button(frame_3, text="Quit", width=6, command=root.quit)
+# boutonFermer.pack(side=RIGHT, padx=10)
 
-current_row += 1
+# current_row += 1
 
 # # --- separator
 # separator = ttk.Frame(root, height=2)
