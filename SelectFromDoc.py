@@ -1,3 +1,4 @@
+from xmlrpc.client import boolean
 import pandas as pd
 from pandas import read_fwf, read_json, read_xml, read_clipboard
 from pandasql import sqldf
@@ -532,6 +533,7 @@ def browse():
                 boutonExecuter["state"] = "normal"
                 boutonExporterResultat["state"] = "disabled"
                 option_displayGraphBar["state"] = "disabled"
+                boutonVisualisation["state"] = "disabled"
             except Exception as ErrRead:
                 messagebox.showerror('Reading error', ErrRead)
         else:
@@ -558,6 +560,7 @@ def sourceFromClipboard():
         boutonExecuter["state"] = "normal"
         boutonExporterResultat["state"] = "disabled"
         option_displayGraphBar["state"] = "disabled"
+        boutonVisualisation["state"] = "disabled"
 
     except pd.errors.EmptyDataError:
         requete_sql.delete("1.0","end")
@@ -640,6 +643,14 @@ def Executer():
             boutonExporterResultat["state"] = "normal"
             option_displayGraphBar["state"] = "normal"
 
+            xAxis.set('')
+            yAxis.set('')
+            Titre.set('')
+            XLabel.set('')
+            YLabel.set('')
+            Legend.set('')
+
+
             # --- enregistrer la requête dans un fichier TEMP
             with open('last_request.sql','w') as f:
                 print(requete_sql.get("1.0","end"),file=f)
@@ -693,7 +704,7 @@ def Exporter():
         messagebox.showerror('Exportation error', ErrExport)
 
 
-def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yAxisNums: str, xLabel: str = None, yLabel: str = None, yLegendLabels: str = None, bar_width=0.4):
+def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yAxisNums: str, xLabel: str = None, yLabel: str = None, yLegendLabels: str = None, saveFigure: bool = True, formatSavedFigure:str='png', bar_width=0.4):
 
     # plt.figure(figsize=(10, 6))
     plt.figure()
@@ -727,9 +738,14 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
         
     columnsLegenUsed_for_yAxis = [x for x in yLegendLabels.split(',')]
 
+    colors = (('lightblue','blue'),('lightcoral','coral'),('lightgreen','green'),('thistle','purple'),('lightseagreen','seagreen'),('burlywood','brown'),('pink','hotpink'),('orangered','orange'),('silver','gray'),('violet','mediumvioletred'))
+
     for i, colName in enumerate(columnsNamesUsed_for_yAxis):
         valLabel = columnsLegenUsed_for_yAxis[i] if i < len(columnsLegenUsed_for_yAxis) else ''
         match graphType:
+            case 'Area':
+                plt.fill_between(x_positions, df[colName], color=colors[i][0], alpha=0.4)
+                plt.plot(x_positions, df[colName], color=colors[i][1], alpha=0.6, label=valLabel)
             case 'Bar':
                 plt.bar(x_positions + i*bar_width, df[colName], width=bar_width, label=valLabel)
             case 'Barh':
@@ -773,21 +789,31 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
 
     if graphType != 'Barh':
         plt.xlabel(xLabel)
-        plt.ylabel(yLabel)
+        if graphType != 'Pie':
+            plt.ylabel(yLabel)
     else:
+        # For 'Barh' type we invert between axes
         plt.xlabel(yLabel)
         plt.ylabel(xLabel)
-    plt.xticks(x_positions, df[columnNameUsed_for_xAxis])  # Set x-axis labels back to the original non-numeric values
+
+    if graphType != 'Pie':
+        if graphType != 'Barh':
+            plt.xticks(x_positions, df[columnNameUsed_for_xAxis])  # Set x-axis labels back to the original non-numeric values
+        else:
+            plt.yticks(x_positions, df[columnNameUsed_for_xAxis])  # Set x-axis labels back to the original non-numeric values
     plt.title(title)
 
-    if yLegendLabels != '':
+    if yLegendLabels != '' and graphType != 'Pie':
         plt.legend()
 
-    # Rotate x-axis labels for better readability if needed
-    plt.xticks(rotation=45)
+    if graphType != 'Pie':
+        # Rotate x-axis labels for better readability if needed
+        if graphType != 'Barh':
+            plt.xticks(rotation=45)
+        else:
+            plt.yticks(rotation=45)
 
-    plt.tight_layout()
-    # plt.subplots_adjust(left=0.2, right=0.8, top=0.8, bottom=0.2)
+        plt.tight_layout()
 
     fig = plt.gcf()
     fig_width, fig_height = fig.get_size_inches()
@@ -796,6 +822,9 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
 
     # Set the position
     plt.get_current_fig_manager().window.wm_geometry(f"+{pos_x}+{pos_y}")
+
+    if saveFigure:
+        fig.savefig(f'last_figure.{formatSavedFigure}')
 
     plt.show()
 
