@@ -532,7 +532,7 @@ def browse():
 
                 boutonExecuter["state"] = "normal"
                 boutonExporterResultat["state"] = "disabled"
-                option_displayGraphBar["state"] = "disabled"
+                option_displayGraphToolbar["state"] = "disabled"
                 boutonVisualisation["state"] = "disabled"
             except Exception as ErrRead:
                 messagebox.showerror('Reading error', ErrRead)
@@ -559,7 +559,7 @@ def sourceFromClipboard():
 
         boutonExecuter["state"] = "normal"
         boutonExporterResultat["state"] = "disabled"
-        option_displayGraphBar["state"] = "disabled"
+        option_displayGraphToolbar["state"] = "disabled"
         boutonVisualisation["state"] = "disabled"
 
     except pd.errors.EmptyDataError:
@@ -641,7 +641,7 @@ def Executer():
             vTempsExec.set(f"{len(df)} record{s}  (in {dureeExec:.2f} s)")
 
             boutonExporterResultat["state"] = "normal"
-            option_displayGraphBar["state"] = "normal"
+            option_displayGraphToolbar["state"] = "normal"
 
             xAxis.set('')
             yAxis.set('')
@@ -753,8 +753,10 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
             case 'Line':
                 plt.plot(x_positions + i*bar_width, df[colName], label=valLabel)
             case 'Pie':
-                plt.pie(df[colName], labels=x_positions, autopct='%1.1f%%')
-                # plt.pie(df['NOMBRE'], labels=df['CATEGORIE'], autopct='%1.1f%%')
+                plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
+                # plt.pie(df[colName], explode=tuple([0.1 if x==0 else 0 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
+                # plt.pie(df[colName], labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
+                # plt.pie(df[colName], labels=x_positions, autopct='%1.1f%%', shadow=True, startangle=90)
             case 'Scatter':
                 plt.scatter(x_positions + i*bar_width, df[colName], label=valLabel)
         # if i >= len(columnsLegenUsed_for_yAxis) Then the Legend is empty or doesn't contain sufficient elements
@@ -803,8 +805,12 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
             plt.yticks(x_positions, df[columnNameUsed_for_xAxis])  # Set x-axis labels back to the original non-numeric values
     plt.title(title)
 
-    if yLegendLabels != '' and graphType != 'Pie':
-        plt.legend()
+    # if yLegendLabels != '' and graphType != 'Pie':
+    if yLegendLabels != '':
+        if graphType != 'Pie':
+            plt.legend()
+        else:
+            plt.legend(loc='upper left', bbox_to_anchor=(-0.3, 1))
 
     if graphType != 'Pie':
         # Rotate x-axis labels for better readability if needed
@@ -829,9 +835,9 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
     plt.show()
 
 
-def changerDisplayGraphBar():
+def changerDisplayGraphToolbar():
     global frame_2bis, frame_2bis_row
-    if displayGraphBar.get() == 1:
+    if displayGraphToolbar.get() == 1:
         frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
     else:
         frame_2bis.grid_remove()
@@ -911,9 +917,9 @@ root.grid_columnconfigure(0, weight=1)   # makes the widgets with sticky='WE' fi
 
 # Colors
 bg_color_default = "#b7cbf3"
-bg_color_default_GraphBar = "#31579D" #"#6b84b6"
+bg_color_default_GraphToolbar = "#31579D" #"#6b84b6"
 fg_color_default_Label = "#31579D"
-fg_color_default_Label_GraphBar = "#b7cbf3"
+fg_color_default_Label_GraphToolbar = "#b7cbf3"
 fg_color_default_Label_ShortcutKey = "maroon"
 fg_color_default_Label_Copyright = "gray"
 bg_color_default_Button = "#31579D"
@@ -922,9 +928,9 @@ fg_color_default_Button = "#31579D"
 # --- Default styles
 style = ttk.Style()
 style.configure('TFrame', background=bg_color_default)
-style.configure('GraphBar.TFrame', background=bg_color_default_GraphBar)
+style.configure('GraphToolbar.TFrame', background=bg_color_default_GraphToolbar)
 style.configure('TLabel', foreground=fg_color_default_Label, background=bg_color_default, font=("Helvetica", 10))
-style.configure('GraphBar.TLabel', foreground=fg_color_default_Label_GraphBar, background=bg_color_default_GraphBar, font=("Helvetica", 10))
+style.configure('GraphToolbar.TLabel', foreground=fg_color_default_Label_GraphToolbar, background=bg_color_default_GraphToolbar, font=("Helvetica", 10))
 style.configure('TButton', foreground=fg_color_default_Button, background=bg_color_default_Button, font=("Helvetica", 10))
 
 # * --------- Frame 1 : doc source
@@ -996,12 +1002,12 @@ boutonFermer = ttk.Button(frame_2, text="Quit", width=6, command=root.quit)
 boutonFermer.pack(side=RIGHT, padx=10)
 
 # --- option "Graph"
-displayGraphBar = IntVar()
-option_displayGraphBar = ttk.Checkbutton(frame_2, text="Chart toolbar", state="disabled", variable=displayGraphBar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphBar)
+displayGraphToolbar = IntVar()
+option_displayGraphToolbar = ttk.Checkbutton(frame_2, text="Chart toolbar", state="disabled", variable=displayGraphToolbar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphToolbar)
 ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
-option_displayGraphBar.configure(style="Custom.TCheckbutton")
-Tooltip(option_displayGraphBar, "Display chart toolbar to visualize data")
-option_displayGraphBar.pack(side=RIGHT,padx=20)
+option_displayGraphToolbar.configure(style="Custom.TCheckbutton")
+Tooltip(option_displayGraphToolbar, "Display chart toolbar to visualize data")
+option_displayGraphToolbar.pack(side=RIGHT,padx=20)
 
 # --- Export
 boutonExporterResultat = ttk.Button(frame_2, text="Export", state="disabled", command=Exporter)
@@ -1020,14 +1026,14 @@ current_row += 1
 
 
 # * --------- Frame 4 : Graph
-frame_2bis = ttk.Frame(root, style='GraphBar.TFrame')
+frame_2bis = ttk.Frame(root, style='GraphToolbar.TFrame')
 frame_2bis_row = current_row
 frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
 frame_2bis.grid_remove()
 
 # --- Graph type
 lblGraphType = ttk.Label(frame_2bis, text="Type:")
-lblGraphType.configure(style='GraphBar.TLabel')
+lblGraphType.configure(style='GraphToolbar.TLabel')
 lblGraphType.pack(side=LEFT, padx=5, pady=6)
 
 graphType = StringVar()
@@ -1037,7 +1043,7 @@ combo_graphType.pack(side=LEFT)
 
 # --- x-axis
 lblXAxis = ttk.Label(frame_2bis, text="x-axis column:")
-lblXAxis.configure(style='GraphBar.TLabel')
+lblXAxis.configure(style='GraphToolbar.TLabel')
 lblXAxis.pack(side=LEFT, padx=5)
 
 # xAxis = StringVar(value=1)
@@ -1048,7 +1054,7 @@ entryXAxis.pack(side=LEFT) #, padx=5)
 
 # --- y-axis
 lblYAxis = ttk.Label(frame_2bis, text="y-axis columns (,):")
-lblYAxis.configure(style='GraphBar.TLabel')
+lblYAxis.configure(style='GraphToolbar.TLabel')
 lblYAxis.pack(side=LEFT, padx=5) #, pady=10)
 
 # yAxis = StringVar(value=2)
@@ -1059,7 +1065,7 @@ entryYAxis.pack(side=LEFT) #, padx=5)
 
 # --- Title
 lblTitre = ttk.Label(frame_2bis, text="Title:")
-lblTitre.configure(style='GraphBar.TLabel')
+lblTitre.configure(style='GraphToolbar.TLabel')
 lblTitre.pack(side=LEFT, padx=5)
 
 Titre = StringVar()
@@ -1069,7 +1075,7 @@ entryTitre.pack(side=LEFT) #, padx=5)
 
 # --- x-Label
 lblXLabel = ttk.Label(frame_2bis, text="x-label:")
-lblXLabel.configure(style='GraphBar.TLabel')
+lblXLabel.configure(style='GraphToolbar.TLabel')
 lblXLabel.pack(side=LEFT, padx=5)
 
 XLabel = StringVar()
@@ -1079,7 +1085,7 @@ entryXLabel.pack(side=LEFT) #, padx=5)
 
 # --- y-Label
 lblYLabel = ttk.Label(frame_2bis, text="y-label:")
-lblYLabel.configure(style='GraphBar.TLabel')
+lblYLabel.configure(style='GraphToolbar.TLabel')
 lblYLabel.pack(side=LEFT, padx=5)
 
 YLabel = StringVar()
@@ -1089,7 +1095,7 @@ entryYLabel.pack(side=LEFT) #, padx=5)
 
 # --- Legend
 lblLegend = ttk.Label(frame_2bis, text="Legend (,):")
-lblLegend.configure(style='GraphBar.TLabel')
+lblLegend.configure(style='GraphToolbar.TLabel')
 lblLegend.pack(side=LEFT, padx=5)
 
 Legend = StringVar()

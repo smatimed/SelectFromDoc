@@ -1,4 +1,0 @@
-select PERIODE, sum(DEBIT) as DEBIT, sum(CREDIT) as CREDIT
-from doc
-where PERIODE like '2022%'
-group by PERIODE
