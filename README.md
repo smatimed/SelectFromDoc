@@ -44,6 +44,16 @@ python SelectFromDoc.py
 - write a SELECT request ('from doc' is mandatory)
 - click on "Execute" button
 - to save the result, choose a format (CSV, Excel, JSON, Html, Text or XML) and click on "Export" button
+- to visualize a chart from data click on "chart toolbar" to display the related toolbar
+  then give these informations:
+  - Type of the chart (Area, Bar, Barh, Line, Pie, Scatter)
+  - x-axis column: number of the column to use in X axis
+  - y-axis column(s): number(s) of the column(s) to use in Y axis, separated by ',' if there is more than one
+  - Title
+  - x-label: Label for X axis (empty = no label)
+  - y-label: Label for Y axis (empty = no label)
+  - Legend: Legend for column(s) used for Y axis, separated by ',' if there is more than one (empty = no legend)
+  then click on the button "Visualization"
 - to get help about SQlite select click on the button "SQL help".
 
 

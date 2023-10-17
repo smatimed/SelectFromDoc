@@ -23,6 +23,8 @@ from os.path import exists
 
 from pathlib import Path
 
+import argparse
+
 root = Tk()
 root_width = 980
 root_height = 600
@@ -69,12 +71,20 @@ def on_keypress(event):
     if event.keysym =="F8":
         if boutonExecuter["state"] != "disabled":
             Executer()
+    # F9
+    if event.keysym =="F9":
+        if boutonVisualisation["state"] != "disabled":
+            displayGraph(df, graphType.get(), Titre.get(), xAxis.get(), yAxis.get(), XLabel.get(), YLabel.get(), Legend.get())
     # F1
     elif event.keysym =="F1":
         ouvrir_Sql_Aide()
     # Ctrl + Q
     elif event.keysym == 'q' and event.state & 0x4:
         root.quit()
+    # RETURN
+    elif event.keysym =="Return":
+        generateTAB()
+
     # else:
     #     print(f'Key pressed: {event.keysym}')
 
@@ -87,6 +97,19 @@ def on_keypress(event):
 
 root.bind("<KeyPress>",on_keypress)
 
+
+def on_enter_in_entryPath(event):
+    # When ENTER is pressed inside 'entryPath' widget
+    openDoc(docSource.get())
+    boutonExecuter.focus()
+
+
+def generateTAB():
+    event = tk.Event()
+    event.keysym = 'Tab'
+    event.keycode = 9
+    root.event_generate('<KeyPress>', **event.__dict__)
+    root.event_generate('<KeyRelease>', **event.__dict__)
 
 
 def ouvrir_Sql_Aide():
@@ -485,59 +508,111 @@ def my_read_csv(csvDocument:str, separator:str=';'):
     return df_result
 
 
-def browse():
+def openDoc(docPath:str):
     global docSource, doc
+    extension = Path(docPath).suffix.upper()
+    if extension in ('.CSV', '.JSON', '.TXT', '.XLSX', '.XLS', '.XML'):
+        boutonExecuter["state"] = "disabled"
+        requete_sql.delete("1.0","end")
+        requete_sql.insert(END,"\n   Wait ...")
+        rafraichir_affichage()
+
+        docSource.set(docPath)
+
+        try:
+            # --- open doc
+            # Excel
+            if extension == '.XLSX' or extension == '.XLS':
+                doc = my_read_excel(docSource.get())
+            # CSV
+            elif extension == '.CSV':
+                doc = my_read_csv(docSource.get())
+            # Text
+            elif extension == '.TXT':
+                doc = read_fwf(docSource.get())
+            # XML
+            elif extension == '.XML':
+                doc = read_xml(docSource.get())
+            # JSON
+            elif extension == '.JSON':
+                doc = read_json(docSource.get())
+            
+            requete_sql.delete("1.0","end")
+
+            # if there is a SQL file with the same name we open it automatically
+            sql_file = docPath.upper().replace(extension,'.sql')
+            if exists(sql_file):
+                requete_sql.insert(END, '-- select '+', '.join(doc.columns)+'\n')
+                # --- lire SQL file
+                with open(sql_file) as f:
+                    for ligne in f:
+                        requete_sql.insert(END,ligne)
+            else:
+                requete_sql.insert(END, 'select '+', '.join(doc.columns)+'\nfrom doc')
+
+            boutonExecuter["state"] = "normal"
+            boutonExporterResultat["state"] = "disabled"
+            option_displayGraphToolbar["state"] = "disabled"
+            boutonVisualisation["state"] = "disabled"
+        except Exception as ErrRead:
+            messagebox.showerror('Reading error', ErrRead)
+    else:
+        messagebox.showerror('Format error',f"This format '{extension}' is not supported.")    
+
+def browse():
+    # global docSource, doc
     result = filedialog.askopenfilename(title="Select a document", filetypes=(("All supported formats", ("*.csv", "*.json", "*.txt", "*.xlsx", "*.xls", "*.xml")), ("CSV file", "*.csv"), ("Excel doc", ("*.xlsx", "*.xls")), ("JSON file", "*.json"), ("Text file (fixed width)", "*.txt"), ("XML file", "*.xml"), ("All Files", "*.*")))
 
     if result != '':
-        extension = Path(result).suffix.upper()
-        if extension in ('.CSV', '.JSON', '.TXT', '.XLSX', '.XLS', '.XML'):
-            boutonExecuter["state"] = "disabled"
-            requete_sql.delete("1.0","end")
-            requete_sql.insert(END,"\n   Wait ...")
-            rafraichir_affichage()
+        openDoc(result)
+        # extension = Path(result).suffix.upper()
+        # if extension in ('.CSV', '.JSON', '.TXT', '.XLSX', '.XLS', '.XML'):
+        #     boutonExecuter["state"] = "disabled"
+        #     requete_sql.delete("1.0","end")
+        #     requete_sql.insert(END,"\n   Wait ...")
+        #     rafraichir_affichage()
 
-            docSource.set(result)
+        #     docSource.set(result)
 
-            try:
-                # --- open doc
-                # Excel
-                if extension == '.XLSX' or extension == '.XLS':
-                    doc = my_read_excel(docSource.get())
-                # CSV
-                elif extension == '.CSV':
-                    doc = my_read_csv(docSource.get())
-                # Text
-                elif extension == '.TXT':
-                    doc = read_fwf(docSource.get())
-                # XML
-                elif extension == '.XML':
-                    doc = read_xml(docSource.get())
-                # JSON
-                elif extension == '.JSON':
-                    doc = read_json(docSource.get())
+        #     try:
+        #         # --- open doc
+        #         # Excel
+        #         if extension == '.XLSX' or extension == '.XLS':
+        #             doc = my_read_excel(docSource.get())
+        #         # CSV
+        #         elif extension == '.CSV':
+        #             doc = my_read_csv(docSource.get())
+        #         # Text
+        #         elif extension == '.TXT':
+        #             doc = read_fwf(docSource.get())
+        #         # XML
+        #         elif extension == '.XML':
+        #             doc = read_xml(docSource.get())
+        #         # JSON
+        #         elif extension == '.JSON':
+        #             doc = read_json(docSource.get())
                 
-                requete_sql.delete("1.0","end")
+        #         requete_sql.delete("1.0","end")
 
-                # if there is a SQL file with the same name we open it automatically
-                sql_file = result.upper().replace(extension,'.sql')
-                if exists(sql_file):
-                    requete_sql.insert(END, '-- select '+', '.join(doc.columns)+'\n')
-                    # --- lire SQL file
-                    with open(sql_file) as f:
-                        for ligne in f:
-                            requete_sql.insert(END,ligne)
-                else:
-                    requete_sql.insert(END, 'select '+', '.join(doc.columns)+'\nfrom doc')
+        #         # if there is a SQL file with the same name we open it automatically
+        #         sql_file = result.upper().replace(extension,'.sql')
+        #         if exists(sql_file):
+        #             requete_sql.insert(END, '-- select '+', '.join(doc.columns)+'\n')
+        #             # --- lire SQL file
+        #             with open(sql_file) as f:
+        #                 for ligne in f:
+        #                     requete_sql.insert(END,ligne)
+        #         else:
+        #             requete_sql.insert(END, 'select '+', '.join(doc.columns)+'\nfrom doc')
 
-                boutonExecuter["state"] = "normal"
-                boutonExporterResultat["state"] = "disabled"
-                option_displayGraphToolbar["state"] = "disabled"
-                boutonVisualisation["state"] = "disabled"
-            except Exception as ErrRead:
-                messagebox.showerror('Reading error', ErrRead)
-        else:
-            messagebox.showerror('Format error',f"This format '{extension}' is not supported.")
+        #         boutonExecuter["state"] = "normal"
+        #         boutonExporterResultat["state"] = "disabled"
+        #         option_displayGraphToolbar["state"] = "disabled"
+        #         boutonVisualisation["state"] = "disabled"
+        #     except Exception as ErrRead:
+        #         messagebox.showerror('Reading error', ErrRead)
+        # else:
+        #     messagebox.showerror('Format error',f"This format '{extension}' is not supported.")
 
 
 def sourceFromClipboard():
@@ -753,7 +828,8 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
             case 'Line':
                 plt.plot(x_positions + i*bar_width, df[colName], label=valLabel)
             case 'Pie':
-                plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
+                plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
+                # plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
                 # plt.pie(df[colName], explode=tuple([0.1 if x==0 else 0 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
                 # plt.pie(df[colName], labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
                 # plt.pie(df[colName], labels=x_positions, autopct='%1.1f%%', shadow=True, startangle=90)
@@ -810,7 +886,7 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
         if graphType != 'Pie':
             plt.legend()
         else:
-            plt.legend(loc='upper left', bbox_to_anchor=(-0.3, 1))
+            plt.legend(loc='upper left', bbox_to_anchor=(-0.3, 1), labels=df[columnNameUsed_for_xAxis])
 
     if graphType != 'Pie':
         # Rotate x-axis labels for better readability if needed
@@ -903,10 +979,25 @@ def on_validate_yAxis(valeur):
 
 validate_yAxis = root.register(on_validate_yAxis)
 
+def createSeparator_GraphToolbar():
+    seperator = ttk.Label(frame_2bis, text=" ")
+    seperator.configure(style='GraphToolbar.TLabel')
+    seperator.pack(side=LEFT)
+
+
 
 # * ===========================================================================
 # * ===========================================================================
 # * ===========================================================================
+
+
+parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
+
+parser.add_argument('-d','--doc', help='Path to a document')
+args = parser.parse_args()
 
 
 global doc
@@ -921,6 +1012,7 @@ bg_color_default_GraphToolbar = "#31579D" #"#6b84b6"
 fg_color_default_Label = "#31579D"
 fg_color_default_Label_GraphToolbar = "#b7cbf3"
 fg_color_default_Label_ShortcutKey = "maroon"
+fg_color_default_Label_ShortcutKey_GraphToolbar = "yellow"
 fg_color_default_Label_Copyright = "gray"
 bg_color_default_Button = "#31579D"
 fg_color_default_Button = "#31579D"
@@ -948,6 +1040,9 @@ entryPath.pack(side=LEFT, padx=5)
 boutonPath = ttk.Button(frame_1, text='...', width=3, command=browse)
 Tooltip(boutonPath, "Click here to select a document")
 boutonPath.pack(side=LEFT)
+
+entryPath.bind('<Return>', on_enter_in_entryPath)
+entryPath.focus()
 
 
 boutonFromClipboard = ttk.Button(frame_1, text='From clipboard', command=sourceFromClipboard)
@@ -983,11 +1078,13 @@ frame_2 = ttk.Frame(root)
 frame_2.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
 # --- bouton Executer
+ttk.Label(frame_2, text=" ").pack(side=LEFT)
+
 lblF8 = ttk.Label(frame_2,text="F8")
 # ttk.Style().configure("Bold.TLabel", font=("TkDefaultFont", 9, "bold"))
 style.configure("Bold.TLabel", font=("TkDefaultFont", 9, "bold"), foreground=fg_color_default_Label_ShortcutKey, background=bg_color_default)
 lblF8.configure(style="Bold.TLabel")
-lblF8.pack(side=LEFT, padx=7)
+lblF8.pack(side=LEFT, padx=5)
 boutonExecuter = ttk.Button(frame_2, text="  Execute  ", state="disabled", command=Executer)
 boutonExecuter.pack(side=LEFT, padx=5, pady=10)
 
@@ -1032,9 +1129,10 @@ frame_2bis.grid(row=frame_2bis_row, column=0, columnspan=2, sticky='WE')
 frame_2bis.grid_remove()
 
 # --- Graph type
+createSeparator_GraphToolbar()
 lblGraphType = ttk.Label(frame_2bis, text="Type:")
 lblGraphType.configure(style='GraphToolbar.TLabel')
-lblGraphType.pack(side=LEFT, padx=5, pady=6)
+lblGraphType.pack(side=LEFT, pady=6)
 
 graphType = StringVar()
 graphType.set("Bar")
@@ -1042,31 +1140,34 @@ combo_graphType = ttk.Combobox(frame_2bis, textvariable=graphType, width=6, valu
 combo_graphType.pack(side=LEFT)
 
 # --- x-axis
+createSeparator_GraphToolbar()
 lblXAxis = ttk.Label(frame_2bis, text="x-axis column:")
 lblXAxis.configure(style='GraphToolbar.TLabel')
-lblXAxis.pack(side=LEFT, padx=5)
+lblXAxis.pack(side=LEFT)
 
 # xAxis = StringVar(value=1)
 xAxis = StringVar()
 entryXAxis = ttk.Entry(frame_2bis, textvariable=xAxis, width=3, validate="key", validatecommand=(validate_xAxis, '%P'))
 Tooltip(entryXAxis, "Number of the column to use in X axis")
-entryXAxis.pack(side=LEFT) #, padx=5)
+entryXAxis.pack(side=LEFT)
 
 # --- y-axis
-lblYAxis = ttk.Label(frame_2bis, text="y-axis columns (,):")
+createSeparator_GraphToolbar()
+lblYAxis = ttk.Label(frame_2bis, text="y-axis column(s):")
 lblYAxis.configure(style='GraphToolbar.TLabel')
-lblYAxis.pack(side=LEFT, padx=5) #, pady=10)
+lblYAxis.pack(side=LEFT)
 
 # yAxis = StringVar(value=2)
 yAxis = StringVar()
 entryYAxis = ttk.Entry(frame_2bis, textvariable=yAxis, width=6, validate="key", validatecommand=(validate_yAxis, '%P'))
 Tooltip(entryYAxis, "Number(s) of the column(s) to use in Y axis\nseparated by ',' if there is more than one")
-entryYAxis.pack(side=LEFT) #, padx=5)
+entryYAxis.pack(side=LEFT)
 
 # --- Title
+createSeparator_GraphToolbar()
 lblTitre = ttk.Label(frame_2bis, text="Title:")
 lblTitre.configure(style='GraphToolbar.TLabel')
-lblTitre.pack(side=LEFT, padx=5)
+lblTitre.pack(side=LEFT)
 
 Titre = StringVar()
 entryTitre = ttk.Entry(frame_2bis, textvariable=Titre, width=10)
@@ -1074,9 +1175,10 @@ Tooltip(entryTitre, "Title of the chart\n(empty = no title)")
 entryTitre.pack(side=LEFT) #, padx=5)
 
 # --- x-Label
+createSeparator_GraphToolbar()
 lblXLabel = ttk.Label(frame_2bis, text="x-label:")
 lblXLabel.configure(style='GraphToolbar.TLabel')
-lblXLabel.pack(side=LEFT, padx=5)
+lblXLabel.pack(side=LEFT)
 
 XLabel = StringVar()
 entryXLabel = ttk.Entry(frame_2bis, textvariable=XLabel, width=10)
@@ -1084,9 +1186,10 @@ Tooltip(entryXLabel, "Label for X axis\n(empty = no label)")
 entryXLabel.pack(side=LEFT) #, padx=5)
 
 # --- y-Label
+createSeparator_GraphToolbar()
 lblYLabel = ttk.Label(frame_2bis, text="y-label:")
 lblYLabel.configure(style='GraphToolbar.TLabel')
-lblYLabel.pack(side=LEFT, padx=5)
+lblYLabel.pack(side=LEFT)
 
 YLabel = StringVar()
 entryYLabel = ttk.Entry(frame_2bis, textvariable=YLabel, width=10)
@@ -1094,9 +1197,10 @@ Tooltip(entryYLabel, "Label for Y axis\n(empty = no label)")
 entryYLabel.pack(side=LEFT) #, padx=5)
 
 # --- Legend
-lblLegend = ttk.Label(frame_2bis, text="Legend (,):")
+createSeparator_GraphToolbar()
+lblLegend = ttk.Label(frame_2bis, text="Legend:")
 lblLegend.configure(style='GraphToolbar.TLabel')
-lblLegend.pack(side=LEFT, padx=5)
+lblLegend.pack(side=LEFT)
 
 Legend = StringVar()
 entryLegend = ttk.Entry(frame_2bis, textvariable=Legend, width=10)
@@ -1105,10 +1209,17 @@ entryLegend.pack(side=LEFT) #, padx=5)
 
 
 # --- Visualization button
+createSeparator_GraphToolbar()
+lblF9 = ttk.Label(frame_2bis,text="F9")
+style.configure("Bold2.TLabel", font=("TkDefaultFont", 9, "bold"), foreground=fg_color_default_Label_ShortcutKey_GraphToolbar, background=bg_color_default_GraphToolbar)
+lblF9.configure(style="Bold2.TLabel")
+lblF9.pack(side=LEFT)
+
 boutonVisualisation = ttk.Button(frame_2bis, text='Visualization', state="disabled", width=12, command= lambda: displayGraph(df, graphType.get(), Titre.get(), xAxis.get(), yAxis.get(), XLabel.get(), YLabel.get(), Legend.get()))
 # boutonVisualisation = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
-boutonVisualisation.pack(side=LEFT, padx=5)
+boutonVisualisation.pack(side=LEFT)
 
+createSeparator_GraphToolbar()
 current_row += 1
 
 
@@ -1169,5 +1280,10 @@ current_row += 1
 
 # Bind the window resize event to the on_resize function
 root.bind('<Configure>', on_resize)
+
+# Open a doc from the command line arguments
+if args.doc:
+    docSource.set(args.doc)
+    openDoc(args.doc)
 
 root.mainloop()
