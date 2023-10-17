@@ -53,7 +53,7 @@ python SelectFromDoc.py
   - x-label: Label for X axis (empty = no label)
   - y-label: Label for Y axis (empty = no label)
   - Legend: Legend for column(s) used for Y axis, separated by ',' if there is more than one (empty = no legend)
-  then click on the button "Visualization"
+  - then click on the button "Visualization"
 - to get help about SQlite select click on the button "SQL help".
 
 
