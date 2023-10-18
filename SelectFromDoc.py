@@ -587,6 +587,22 @@ def browse():
         openDoc(result)
 
 
+def openRequest():
+    # global docSource, doc
+    result = filedialog.askopenfilename(title="Select a request", filetypes=(("SQL file", "*.sql"), ("All Files", "*.*")))
+
+    if result != '':
+        # --- lire SQL file
+        requete_sql.delete("1.0","end")
+        with open(result) as f:
+            for ligne in f:
+                requete_sql.insert(END,ligne)
+
+
+def saveRequest():
+    pass
+
+
 def sourceFromClipboard():
     global docSource, doc
 
@@ -800,13 +816,8 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
             case 'Line':
                 plt.plot(x_positions + i*bar_width, df[colName], label=valLabel)
             case 'Pie':
-
                 # plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
                 plt.pie(df[colName], explode=tuple([(0.1 if x==0 else 0) for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
-
-                # plt.pie(df[colName], explode=tuple([0.1 if x==0 else 0 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
-                # plt.pie(df[colName], labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
-                # plt.pie(df[colName], labels=x_positions, autopct='%1.1f%%', shadow=True, startangle=90)
             case 'Scatter':
                 plt.scatter(x_positions + i*bar_width, df[colName], label=valLabel)
         # if i >= len(columnsLegenUsed_for_yAxis) Then the Legend is empty or doesn't contain sufficient elements
@@ -840,9 +851,11 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
     if graphType != 'Pie':
         # Rotate x-axis labels for better readability if needed
         if graphType != 'Barh':
-            plt.xticks(rotation=45)
+            # plt.xticks(rotation=45)
+            plt.xticks(rotation=90)
         else:
-            plt.yticks(rotation=45)
+            # plt.yticks(rotation=45)
+            plt.yticks()
 
         plt.tight_layout()
 
@@ -985,10 +998,10 @@ lblPath.pack(side=LEFT, padx=5, pady=10)
 
 docSource = StringVar()
 entryPath = ttk.Entry(frame_1, textvariable=docSource, width=70)
-entryPath.pack(side=LEFT, padx=5)
+entryPath.pack(side=LEFT) #, padx=5)
 boutonPath = ttk.Button(frame_1, text='...', width=3, command=browse)
 Tooltip(boutonPath, "Click here to select a document")
-boutonPath.pack(side=LEFT)
+boutonPath.pack(side=LEFT, padx=5)
 
 entryPath.bind('<Return>', on_enter_in_entryPath)
 entryPath.focus()
@@ -1042,6 +1055,18 @@ vTempsExec = StringVar()
 lblTempsExec = ttk.Label(frame_2, textvariable=vTempsExec)
 # lblTempsExec.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblTempsExec.pack(side=LEFT, padx=10, pady=10)
+
+# --- bouton Open Sql
+imageOpen = tk.PhotoImage(file="open.png")
+boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openRequest)
+Tooltip(boutonOpenSql, "Open a SQL request")
+boutonOpenSql.pack(side=LEFT, padx=10)
+
+# --- bouton Save Sql
+imageSave = tk.PhotoImage(file="save.png")
+boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveRequest)
+Tooltip(boutonSaveSql, "Save the current SQL request")
+boutonSaveSql.pack(side=LEFT, padx=10)
 
 # --- bouton Quit
 boutonFermer = ttk.Button(frame_2, text="Quit", width=6, command=root.quit)
