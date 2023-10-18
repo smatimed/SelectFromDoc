@@ -40,8 +40,15 @@ python SelectFromDoc.py
 ```
 python SelectFromDoc.py [-h] [-d DOC]
 ```
-- You can use the excutable, generated using pyinstaller, which is in the folder 'Executable for Windows 64 bits'.
-
+- To generate an excutable for Windows system, use:
+```
+call .venv\scripts\activate
+set PYTHONPATH=path-to-python-folder
+set PYTHONLIB=path-to-python-folder\lib
+pyinstaller --onefile --clean -p .venv\Lib\site-packages --noconsole --add-data "Open.png;." --add-data "Save.png;." --add-data "SelectFromDoc.ico;." --icon=SelectFromDoc.ico SelectFromDoc.py
+```
+Replace "path-to-python-folder" by python path in your system.
+The excutable will be generated in the subfolder 'dist'.
 
 ## Using the application
 - select a document (Excel, CSV, JSON, Fixed-Width Text or XML) by clicking on the button "..."

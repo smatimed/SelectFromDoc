@@ -600,7 +600,13 @@ def openRequest():
 
 
 def saveRequest():
-    pass
+    global requete_sql
+    file_path = filedialog.asksaveasfilename(defaultextension=".sql",
+                                             filetypes=[("SQL files", "*.sql"), ("All files", "*.*")])
+    if file_path:
+        with open(file_path, 'w') as file:
+            file.write(requete_sql.get("1.0","end"))
+        messagebox.showinfo('Save',f'Request saved as {file_path}')
 
 
 def sourceFromClipboard():
@@ -1052,21 +1058,25 @@ boutonExecuter.pack(side=LEFT, padx=5, pady=10)
 
 # --- Temps d'execution
 vTempsExec = StringVar()
+vTempsExec.set(" "*30)
 lblTempsExec = ttk.Label(frame_2, textvariable=vTempsExec)
 # lblTempsExec.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblTempsExec.pack(side=LEFT, padx=10, pady=10)
 
 # --- bouton Open Sql
-imageOpen = tk.PhotoImage(file="open.png")
+# imageOpen = tk.PhotoImage(file="open.png")
+imageOpen = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'open.png')))
 boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openRequest)
 Tooltip(boutonOpenSql, "Open a SQL request")
-boutonOpenSql.pack(side=LEFT, padx=10)
+# boutonOpenSql.pack(side=LEFT, padx=10)
+boutonOpenSql.place(x=320,y=13)
 
 # --- bouton Save Sql
-imageSave = tk.PhotoImage(file="save.png")
+imageSave = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'save.png')))
 boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveRequest)
 Tooltip(boutonSaveSql, "Save the current SQL request")
-boutonSaveSql.pack(side=LEFT, padx=10)
+# boutonSaveSql.pack(side=LEFT, padx=10)
+boutonSaveSql.place(x=360,y=13)
 
 # --- bouton Quit
 boutonFermer = ttk.Button(frame_2, text="Quit", width=6, command=root.quit)
