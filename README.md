@@ -45,7 +45,7 @@ python SelectFromDoc.py [-h] [-d DOC]
 call .venv\scripts\activate
 set PYTHONPATH=path-to-python-folder
 set PYTHONLIB=path-to-python-folder\lib
-pyinstaller --onefile --clean -p .venv\Lib\site-packages --noconsole --add-data "Open.png;." --add-data "Save.png;." --add-data "SelectFromDoc.ico;." --icon=SelectFromDoc.ico SelectFromDoc.py
+pyinstaller --onefile --clean -p .venv\Lib\site-packages --noconsole --add-data "open.png;." --add-data "save.png;." --add-data "SelectFromDoc.ico;." --icon=SelectFromDoc.ico SelectFromDoc.py
 ```
 Replace "path-to-python-folder" by python path in your system.
 The excutable will be generated in the subfolder 'dist'.
