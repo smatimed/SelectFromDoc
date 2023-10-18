@@ -19,7 +19,7 @@ import ntpath
 from time import time
 from datetime import datetime
 
-from os.path import exists
+from os import path
 
 from pathlib import Path
 
@@ -33,8 +33,7 @@ screen_height = root.winfo_screenheight()
 root.geometry(f'{root_width}x{root_height}+{(screen_width-root_width) // 2}+{(screen_height-root_height) // 2}')
 
 root.title('Select From Document (Excel, Csv, Json, Text, Xml) or Clipboard')
-# root.iconbitmap(path.abspath(path.join(path.dirname(__file__), 'SelectFromDoc.ico')))
-root.iconbitmap('SelectFromDoc.ico')
+root.iconbitmap(path.abspath(path.join(path.dirname(__file__), 'SelectFromDoc.ico')))
 
 
 class Tooltip:
@@ -541,7 +540,7 @@ def openDoc(docPath:str):
 
             # if there is a SQL file with the same name we open it automatically
             sql_file = docPath.upper().replace(extension,'.sql')
-            if exists(sql_file):
+            if path.exists(sql_file):
                 requete_sql.insert(END, '-- select '+', '.join(doc.columns)+'\n')
                 # --- lire SQL file
                 with open(sql_file) as f:
@@ -828,8 +827,10 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
             case 'Line':
                 plt.plot(x_positions + i*bar_width, df[colName], label=valLabel)
             case 'Pie':
-                plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
-                # plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
+
+                # plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
+                plt.pie(df[colName], explode=tuple([(0.1 if x==0 else 0) for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
+
                 # plt.pie(df[colName], explode=tuple([0.1 if x==0 else 0 for x in range(len(df[columnNameUsed_for_xAxis]))]), labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
                 # plt.pie(df[colName], labels=df[columnNameUsed_for_xAxis], autopct='%1.1f%%', shadow=True, startangle=90)
                 # plt.pie(df[colName], labels=x_positions, autopct='%1.1f%%', shadow=True, startangle=90)
@@ -837,39 +838,14 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
                 plt.scatter(x_positions + i*bar_width, df[colName], label=valLabel)
         # if i >= len(columnsLegenUsed_for_yAxis) Then the Legend is empty or doesn't contain sufficient elements
 
-    """
-    # --- Bar Chart
-    plt.bar(x_positions, df['NOMBRE'], width=bar_width, label='Nbre')
-    plt.bar(x_positions + bar_width, df['MONTANT'], width=bar_width, label='Mont')
-
-    # --- Bar Horizental Chart
-    plt.barh(x_positions, df['NOMBRE'], height=bar_width, label='Nbre')
-    plt.barh(x_positions + bar_width, df['MONTANT'], height=bar_width, label='Mont')
-
-    # --- Line Chart
-    plt.plot(x_positions, df['NOMBRE'], label='Nbre')
-    plt.plot(x_positions + bar_width, df['MONTANT'], label='Mont')
-
-    # --- Scatter Plot
-    plt.scatter(x_positions, df['NOMBRE'], label='Nbre')
-    plt.scatter(x_positions + bar_width, df['MONTANT'], label='Mont')
-
-    # --- Pie Chart
-    plt.pie(df['NOMBRE'], labels=df['CATEGORIE'], autopct='%1.1f%%')
-
-    # --- Area Chart
-    plt.fill_between(x_positions, df['NOMBRE'], color="skyblue", alpha=0.4)
-    plt.plot(x_positions, df['NOMBRE'], color="Slateblue", alpha=0.6, label='Nbre')
-
-    plt.fill_between(x_positions, df['MONTANT'], color="lightgreen", alpha=0.4)
-    plt.plot(x_positions, df['MONTANT'], color="green", alpha=0.6, label='Mont')
-    """
-
     if graphType != 'Barh':
-        plt.xlabel(xLabel)
         if graphType != 'Pie':
+            plt.xlabel(xLabel)
             plt.ylabel(yLabel)
-    else:
+        else: # Pie
+            # For 'Pie' we display yLabel in the place of xLabel and xLabel is displayed as a title of the legend
+            plt.xlabel(yLabel)
+    else: # Barh
         # For 'Barh' type we invert between axes
         plt.xlabel(yLabel)
         plt.ylabel(xLabel)
@@ -886,7 +862,7 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
         if graphType != 'Pie':
             plt.legend()
         else:
-            plt.legend(loc='upper left', bbox_to_anchor=(-0.3, 1), labels=df[columnNameUsed_for_xAxis])
+            plt.legend(loc='upper left', title=xLabel, bbox_to_anchor=(-0.3, 1), labels=df[columnNameUsed_for_xAxis])
 
     if graphType != 'Pie':
         # Rotate x-axis labels for better readability if needed
@@ -1242,34 +1218,6 @@ sql_resultat.pack(expand=True, fill=BOTH)
 scrollbar_sql_resultat_x.config(command=sql_resultat.xview)
 scrollbar_sql_resultat_y.config(command=sql_resultat.yview)
 
-
-# * --------- Frame 6 : Export
-# frame_3 = ttk.Frame(root)
-# frame_3.grid(row=current_row, column=0, columnspan=5, sticky='WE')
-
-# # --- Export
-# lblExport = ttk.Label(frame_3,text="Export format:")
-# # lblExport.configure(foreground=fg_color_default_Label, background=bg_color_default)
-# lblExport.pack(side=LEFT, padx=10, pady=10)   # , bg=bg_color_default
-
-# exportFormat = StringVar()
-# exportFormat.set("Excel")
-# combo_exportFormat = ttk.Combobox(frame_3, textvariable = exportFormat, width=7, values=('CSV', 'Excel', 'JSON', 'Html', 'Text', 'XML'), state="readonly")
-# combo_exportFormat.pack(side=LEFT)
-
-# boutonExporterResultat = ttk.Button(frame_3, text="Export", state="disabled", command=Exporter)
-# boutonExporterResultat.pack(side=LEFT, padx=10)
-
-# # --- bouton Quit
-# boutonFermer = ttk.Button(frame_3, text="Quit", width=6, command=root.quit)
-# boutonFermer.pack(side=RIGHT, padx=10)
-
-# current_row += 1
-
-# # --- separator
-# separator = ttk.Frame(root, height=2)
-# separator.grid(row=current_row, column=0)
-# current_row += 1
 
 # --- copyright label
 m_smati = (77, 111, 104, 97, 109, 101, 100, 32, 83, 77, 65, 84, 73)

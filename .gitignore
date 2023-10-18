@@ -2,6 +2,9 @@
 a.bat
 *.lnk
 *.sql
+*.cmd
+*.spec
+last_*.*
 ef/
 
 

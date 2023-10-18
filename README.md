@@ -23,7 +23,7 @@ Create the virtual environment:
 set pipenv_venv_in_project=1
 pipenv install
 ```
-The requirements, stored in the file 'Pipfile', (pandas, pandasql, openpyxl, lxml, matplotlib) will be automatically installed.
+The requirements, stored in the file 'Pipfile', (pandas, pandasql, openpyxl, lxml, matplotlib) will be automatically installed. You can modify the version of Python in the file 'Pipfile' by changing the value of 'python_version = "3.11"'.
 
 - Activate the virtual environment :
 ```
@@ -36,6 +36,11 @@ The requirements, stored in the file 'Pipfile', (pandas, pandasql, openpyxl, lxm
 ```
 python SelectFromDoc.py
 ```
+- Complete syntax :
+```
+python SelectFromDoc.py [-h] [-d DOC]
+```
+- You can use the excutable, generated using pyinstaller, which is in the folder 'Executable for Windows 64 bits'.
 
 
 ## Using the application
