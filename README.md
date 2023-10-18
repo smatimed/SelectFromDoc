@@ -72,3 +72,15 @@ The excutable will be generated in the subfolder 'dist'.
 ## Screenshots
 ### main window
 ![mainwindow](https://github.com/smatimed/SelectFromDoc/blob/main/screenshots/main-screen.png?raw=true)
+### chart1-Bar
+![chart1Bar](https://github.com/smatimed/SelectFromDoc/blob/main/screenshots/chart1-Bar.png?raw=true)
+### chart2-Barh
+![chart2Barh](https://github.com/smatimed/SelectFromDoc/blob/main/screenshots/chart2-Barh.png?raw=true)
+### chart3-Area
+![chart3Area](https://github.com/smatimed/SelectFromDoc/blob/main/screenshots/chart3-Area.png?raw=true)
+### chart4-Line
+![chart4Line](https://github.com/smatimed/SelectFromDoc/blob/main/screenshots/chart4-Line.png?raw=true)
+### chart5-Pie
+![chart5Pie](https://github.com/smatimed/SelectFromDoc/blob/main/screenshots/chart5-Pie.png?raw=true)
+### chart6-Scatter
+![chart6Scatter](https://github.com/smatimed/SelectFromDoc/blob/main/screenshots/chart6-Scatter.png?raw=true)

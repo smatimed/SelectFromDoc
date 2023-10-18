@@ -823,7 +823,7 @@ def displayGraph(df: pd.DataFrame, graphType: str, title: str, xAxisNum: str, yA
                 plt.plot(x_positions + i*bar_width, df[colName], label=valLabel)
             case 'Pie':
                 # plt.pie(df[colName], explode=tuple([0.1 for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
-                plt.pie(df[colName], explode=tuple([(0.1 if x==0 else 0) for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
+                plt.pie(df[colName], explode=tuple([(0.1 if x==5 else 0) for x in range(len(df[columnNameUsed_for_xAxis]))]), autopct='%1.1f%%', shadow=True, startangle=90)
             case 'Scatter':
                 plt.scatter(x_positions + i*bar_width, df[colName], label=valLabel)
         # if i >= len(columnsLegenUsed_for_yAxis) Then the Legend is empty or doesn't contain sufficient elements
