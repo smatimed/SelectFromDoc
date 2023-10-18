@@ -2,7 +2,9 @@ from xmlrpc.client import boolean
 import pandas as pd
 from pandas import read_fwf, read_json, read_xml, read_clipboard
 from pandasql import sqldf
+
 import openpyxl
+import xlrd
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -494,6 +496,22 @@ def my_read_excel(excelDocument:str):
     df_result = pd.DataFrame(data[1:], columns=data[0])
     return df_result
 
+def my_read_old_excel(excelDocument:str):
+    """Replace pandas read_excel which we cannot make it read a text column in Excel which is like a number as text.
+    """
+    wb = xlrd.open_workbook(excelDocument)
+    sheet = wb.sheet_by_index(0)
+    data = []
+    for row in range(sheet.nrows):
+        row_data = []
+        for col in range(sheet.ncols):
+            cell = sheet.cell(row, col)
+            row_data.append(cell.value)
+            # print(cell.value, cell.ctype)
+        data.append(row_data)
+    df_result = pd.DataFrame(data[1:], columns=data[0])
+    return df_result
+
 
 def my_read_csv(csvDocument:str, separator:str=';'):
     """Replace pandas read_csv which we cannot make it read a text column in Csv which is like a number as text.
@@ -521,8 +539,11 @@ def openDoc(docPath:str):
         try:
             # --- open doc
             # Excel
-            if extension == '.XLSX' or extension == '.XLS':
+            if extension == '.XLSX':
                 doc = my_read_excel(docSource.get())
+            # Old Excel
+            if extension == '.XLS':
+                doc = my_read_old_excel(docSource.get())
             # CSV
             elif extension == '.CSV':
                 doc = my_read_csv(docSource.get())
@@ -564,54 +585,6 @@ def browse():
 
     if result != '':
         openDoc(result)
-        # extension = Path(result).suffix.upper()
-        # if extension in ('.CSV', '.JSON', '.TXT', '.XLSX', '.XLS', '.XML'):
-        #     boutonExecuter["state"] = "disabled"
-        #     requete_sql.delete("1.0","end")
-        #     requete_sql.insert(END,"\n   Wait ...")
-        #     rafraichir_affichage()
-
-        #     docSource.set(result)
-
-        #     try:
-        #         # --- open doc
-        #         # Excel
-        #         if extension == '.XLSX' or extension == '.XLS':
-        #             doc = my_read_excel(docSource.get())
-        #         # CSV
-        #         elif extension == '.CSV':
-        #             doc = my_read_csv(docSource.get())
-        #         # Text
-        #         elif extension == '.TXT':
-        #             doc = read_fwf(docSource.get())
-        #         # XML
-        #         elif extension == '.XML':
-        #             doc = read_xml(docSource.get())
-        #         # JSON
-        #         elif extension == '.JSON':
-        #             doc = read_json(docSource.get())
-                
-        #         requete_sql.delete("1.0","end")
-
-        #         # if there is a SQL file with the same name we open it automatically
-        #         sql_file = result.upper().replace(extension,'.sql')
-        #         if exists(sql_file):
-        #             requete_sql.insert(END, '-- select '+', '.join(doc.columns)+'\n')
-        #             # --- lire SQL file
-        #             with open(sql_file) as f:
-        #                 for ligne in f:
-        #                     requete_sql.insert(END,ligne)
-        #         else:
-        #             requete_sql.insert(END, 'select '+', '.join(doc.columns)+'\nfrom doc')
-
-        #         boutonExecuter["state"] = "normal"
-        #         boutonExporterResultat["state"] = "disabled"
-        #         option_displayGraphToolbar["state"] = "disabled"
-        #         boutonVisualisation["state"] = "disabled"
-        #     except Exception as ErrRead:
-        #         messagebox.showerror('Reading error', ErrRead)
-        # else:
-        #     messagebox.showerror('Format error',f"This format '{extension}' is not supported.")
 
 
 def sourceFromClipboard():

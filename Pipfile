@@ -9,6 +9,8 @@ pandasql = "*"
 openpyxl = "*"
 lxml = "*"
 matplotlib = "*"
+xlrd = "*"
+
 
 [dev-packages]
 
