@@ -53,7 +53,7 @@ The excutable will be generated in the subfolder 'dist'.
 ## Using the application
 - select a document (Excel, CSV, JSON, Fixed-Width Text or XML) by clicking on the button "..."
 - or copy data to clipboard, in this case click on the button "From clipboard" (after having copied data)
-- write a SELECT request ('from doc' is mandatory)
+- write a SELECT query ('from doc' is mandatory)
 - click on "Execute" button
 - to save the result, choose a format (CSV, Excel, JSON, Html, Text or XML) and click on "Export" button
 - to visualize a chart from data click on "chart toolbar" to display the related toolbar

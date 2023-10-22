@@ -222,7 +222,7 @@ def ouvrir_Sql_Aide():
     scrollbar_y = ttk.Scrollbar(frame_aide)
     scrollbar_y.pack(side=RIGHT, fill=Y)
 
-    text_aide = Text(frame_aide, xscrollcommand=scrollbar_x.set, yscrollcommand=scrollbar_y.set, wrap='none', height=20)# , width=30)
+    text_aide = Text(frame_aide, xscrollcommand=scrollbar_x.set, yscrollcommand=scrollbar_y.set, wrap='none', height=20)
     text_aide.pack(expand=True, fill=BOTH)
 
     scrollbar_x.config(command=text_aide.xview)
@@ -242,12 +242,6 @@ def ouvrir_Sql_Aide():
 
     button_close = ttk.Button(frame_enbas, text="Close", command=Sql_Aide.destroy)
     button_close.pack(side=RIGHT, padx=5, pady=5)
-
-    # wordWrap = IntVar()
-    # ttk.Checkbutton(Sql_Aide, text="Word wrap", variable=wordWrap, onvalue=1, offvalue=0, width=10, command=changerWordWrap).grid(row=1, sticky=W, padx=5)
-
-    # button_close = ttk.Button(Sql_Aide, text="Close", command=Sql_Aide.destroy)
-    # button_close.grid(row=1, sticky=E, padx=5, pady=5)
 
     # Bind the window resize event to the on_resize function
     Sql_Aide.bind('<Configure>', on_resize)
@@ -586,7 +580,6 @@ def my_read_old_excel(excelDocument:str):
         for col in range(sheet.ncols):
             cell = sheet.cell(row, col)
             row_data.append(cell.value)
-            # print(cell.value, cell.ctype)
         data.append(row_data)
     df_result = pd.DataFrame(data[1:], columns=data[0])
     return df_result
@@ -666,26 +659,26 @@ def browse():
         openDoc(result)
 
 
-def openRequest():
+def openQuery():
     # global docSource, doc
-    result = filedialog.askopenfilename(title="Select a request", filetypes=(("SQL file", "*.sql"), ("All Files", "*.*")))
+    result = filedialog.askopenfilename(title="Select a query", filetypes=(("SQL file", "*.sql"), ("All Files", "*.*")))
 
     if result != '':
-        # --- lire SQL file
+        # --- Read SQL file
         requete_sql.delete("1.0","end")
         with open(result) as f:
             for ligne in f:
                 requete_sql.insert(END,ligne)
 
 
-def saveRequest():
+def saveQuery():
     global requete_sql
     file_path = filedialog.asksaveasfilename(defaultextension=".sql",
                                              filetypes=[("SQL files", "*.sql"), ("All files", "*.*")])
     if file_path:
         with open(file_path, 'w') as file:
             file.write(requete_sql.get("1.0","end"))
-        messagebox.showinfo('Save',f'Request saved as {file_path}')
+        messagebox.showinfo('Save',f'Query saved as {file_path}')
 
 
 def sourceFromClipboard():
@@ -723,8 +716,6 @@ def Executer():
     global df
     sql_resultat.delete("1.0","end")
 
-    # print('***',root.width)
-
     try:
         debutExec = time()
         vTempsExec.set(f"Start: {datetime.now().strftime('%H:%M:%S')}")
@@ -738,16 +729,11 @@ def Executer():
             ligne_valeur = ligne2_valeur = ''
             for ind, colonne in enumerate(df.columns):
                 if len(df) > 0:
-                    # if len(colonne) > largeurs[ind]:   # si le nom de la colonne est plus long que sa valeur
                     if len(colonne) > largeurs.iloc[ind]:   # si le nom de la colonne est plus long que sa valeur
-                        # largeurs[ind] = len(colonne)
                         largeurs.iloc[ind] = len(colonne)
                 else:
-                    # largeurs[ind] = len(colonne)
                     largeurs.iloc[ind] = len(colonne)
-                # ligne_valeur += colonne.ljust(largeurs[ind]) + ' '
                 ligne_valeur += colonne.ljust(largeurs.iloc[ind]) + ' '
-                # ligne2_valeur += ''.ljust(largeurs[ind],'-') + ' '
                 ligne2_valeur += ''.ljust(largeurs.iloc[ind],'-') + ' '
             sql_resultat.insert(END, ligne_valeur+'\n')
             sql_resultat.insert(END, ligne2_valeur+'\n')
@@ -784,7 +770,6 @@ def Executer():
             #     sql_resultat.insert(END, ligne_valeur+'\n')
 
             dureeExec = time() - debutExec
-            # vTempsExec.set(f"Durée: {dureeExec:.2f} s , nb.enreg: {len(df)}")
             s = 's' if len(df) > 1 else ''
             vTempsExec.set(f"{len(df)} record{s}  (in {dureeExec:.2f} s)")
 
@@ -800,7 +785,7 @@ def Executer():
 
 
             # --- enregistrer la requête dans un fichier TEMP
-            with open('last_request.sql','w') as f:
+            with open('last_query.sql','w') as f:
                 print(requete_sql.get("1.0","end"),file=f)
 
         except Exception as ErrPython:
@@ -1092,12 +1077,11 @@ frame_1 = ttk.Frame(root)
 frame_1.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
 lblPath = ttk.Label(frame_1, text="Source Document:")
-# lblPath.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblPath.pack(side=LEFT, padx=5, pady=10)
 
 docSource = StringVar()
 entryPath = ttk.Entry(frame_1, textvariable=docSource, width=70)
-entryPath.pack(side=LEFT) #, padx=5)
+entryPath.pack(side=LEFT)
 boutonPath = ttk.Button(frame_1, text='...', width=3, command=browse)
 Tooltip(boutonPath, "Click here to select a document")
 boutonPath.pack(side=LEFT, padx=5)
@@ -1127,7 +1111,7 @@ scrollbar_requete_sql_x.pack(side=BOTTOM, fill=X)
 scrollbar_requete_sql_y = ttk.Scrollbar(frame_requete_sql)
 scrollbar_requete_sql_y.pack(side=RIGHT, fill=Y)
 
-requete_sql = Text(frame_requete_sql, xscrollcommand=scrollbar_requete_sql_x.set, yscrollcommand=scrollbar_requete_sql_y.set, wrap='none', height=8)   #  , width=80
+requete_sql = Text(frame_requete_sql, xscrollcommand=scrollbar_requete_sql_x.set, yscrollcommand=scrollbar_requete_sql_y.set, wrap='none', height=8)
 requete_sql.pack(expand=True, fill=BOTH)
 
 scrollbar_requete_sql_x.config(command=requete_sql.xview)
@@ -1140,21 +1124,22 @@ frame_2.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
 # --- bouton Open Sql
 imageOpen = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'open.png')))
-boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openRequest)
-Tooltip(boutonOpenSql, "Open a SQL request")
+boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openQuery)
+Tooltip(boutonOpenSql, "Open a SQL query")
 boutonOpenSql.pack(side=LEFT, padx=10)
+# boutonOpenSql.place(x=320,y=13)
 
 # --- bouton Save Sql
 imageSave = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'save.png')))
-boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveRequest)
-Tooltip(boutonSaveSql, "Save the current SQL request")
+boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveQuery)
+Tooltip(boutonSaveSql, "Save the current SQL query")
 boutonSaveSql.pack(side=LEFT, padx=10)
+# boutonSaveSql.place(x=360,y=13)
 
 # --- bouton Executer
 ttk.Label(frame_2, text=" ").pack(side=LEFT)
 
 lblF8 = ttk.Label(frame_2,text="F8")
-# ttk.Style().configure("Bold.TLabel", font=("TkDefaultFont", 9, "bold"))
 style.configure("Bold.TLabel", font=("TkDefaultFont", 9, "bold"), foreground=fg_color_default_Label_ShortcutKey, background=bg_color_default)
 lblF8.configure(style="Bold.TLabel")
 lblF8.pack(side=LEFT, padx=5)
@@ -1165,23 +1150,7 @@ boutonExecuter.pack(side=LEFT, padx=5, pady=10)
 vTempsExec = StringVar()
 vTempsExec.set(" "*30)
 lblTempsExec = ttk.Label(frame_2, textvariable=vTempsExec)
-# lblTempsExec.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblTempsExec.pack(side=LEFT, padx=10, pady=10)
-
-# # --- bouton Open Sql
-# # imageOpen = tk.PhotoImage(file="open.png")
-# imageOpen = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'open.png')))
-# boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openRequest)
-# Tooltip(boutonOpenSql, "Open a SQL request")
-# # boutonOpenSql.pack(side=LEFT, padx=10)
-# boutonOpenSql.place(x=320,y=13)
-
-# # --- bouton Save Sql
-# imageSave = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'save.png')))
-# boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveRequest)
-# Tooltip(boutonSaveSql, "Save the current SQL request")
-# # boutonSaveSql.pack(side=LEFT, padx=10)
-# boutonSaveSql.place(x=360,y=13)
 
 # --- bouton Quit
 boutonFermer = ttk.Button(frame_2, text="Quit", width=6, command=root.quit)
@@ -1189,7 +1158,7 @@ boutonFermer.pack(side=RIGHT, padx=10)
 
 # --- option "Graph"
 displayGraphToolbar = IntVar()
-option_displayGraphToolbar = ttk.Checkbutton(frame_2, text="Chart toolbar", variable=displayGraphToolbar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphToolbar)  #, state="disabled"
+option_displayGraphToolbar = ttk.Checkbutton(frame_2, text="Chart toolbar", variable=displayGraphToolbar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphToolbar)
 ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
 option_displayGraphToolbar.configure(style="Custom.TCheckbutton")
 Tooltip(option_displayGraphToolbar, "Display chart toolbar to visualize data")
@@ -1205,8 +1174,7 @@ combo_exportFormat = ttk.Combobox(frame_2, textvariable = exportFormat, width=7,
 combo_exportFormat.pack(side=RIGHT)
 
 lblExport = ttk.Label(frame_2,text="Export format:")
-# lblExport.configure(foreground=fg_color_default_Label, background=bg_color_default)
-lblExport.pack(side=RIGHT, padx=10, pady=10)   # , bg=bg_color_default
+lblExport.pack(side=RIGHT, padx=10, pady=10)
 
 current_row += 1
 
@@ -1261,7 +1229,7 @@ lblTitre.pack(side=LEFT)
 Titre = StringVar()
 entryTitre = ttk.Entry(frame_2bis, textvariable=Titre, width=10)
 Tooltip(entryTitre, "Title of the chart\n(empty = no title)")
-entryTitre.pack(side=LEFT) #, padx=5)
+entryTitre.pack(side=LEFT)
 
 # --- x-Label
 createSeparator_GraphToolbar()
@@ -1272,7 +1240,7 @@ lblXLabel.pack(side=LEFT)
 XLabel = StringVar()
 entryXLabel = ttk.Entry(frame_2bis, textvariable=XLabel, width=10)
 Tooltip(entryXLabel, "Label for X axis\n(empty = no label)")
-entryXLabel.pack(side=LEFT) #, padx=5)
+entryXLabel.pack(side=LEFT)
 
 # --- y-Label
 createSeparator_GraphToolbar()
@@ -1283,7 +1251,7 @@ lblYLabel.pack(side=LEFT)
 YLabel = StringVar()
 entryYLabel = ttk.Entry(frame_2bis, textvariable=YLabel, width=10)
 Tooltip(entryYLabel, "Label for Y axis\n(empty = no label)")
-entryYLabel.pack(side=LEFT) #, padx=5)
+entryYLabel.pack(side=LEFT)
 
 # --- Legend
 createSeparator_GraphToolbar()
@@ -1294,7 +1262,7 @@ lblLegend.pack(side=LEFT)
 Legend = StringVar()
 entryLegend = ttk.Entry(frame_2bis, textvariable=Legend, width=10)
 Tooltip(entryLegend, "Legend for column(s) used for Y axis\nseparated by ',' if there is more than one\n(empty = no legend)")
-entryLegend.pack(side=LEFT) #, padx=5)
+entryLegend.pack(side=LEFT)
 
 
 # --- Visualization button
@@ -1305,7 +1273,6 @@ lblF9.configure(style="Bold2.TLabel")
 lblF9.pack(side=LEFT)
 
 boutonVisualisation = ttk.Button(frame_2bis, text='Visualization', state="disabled", width=12, command= lambda: displayGraph(df, graphType.get(), Titre.get(), xAxis.get(), yAxis.get(), XLabel.get(), YLabel.get(), Legend.get()))
-# boutonVisualisation = ttk.Button(frame_2bis, text='Graph', width=6, state="disabled", command=displayGraph)
 boutonVisualisation.pack(side=LEFT)
 
 createSeparator_GraphToolbar()
@@ -1315,7 +1282,6 @@ current_row += 1
 # * --------- Frame 5 : Résultat
 # --- sql_resultat
 frame_sql_resultat = ttk.Frame(root)
-# frame_sql_resultat = ttk.Frame(root, borderwidth=2, relief=GROOVE, height=18)
 frame_sql_resultat.grid(row=current_row, column=0, columnspan=4, sticky="WENS")
 current_row += 1
 
@@ -1325,7 +1291,7 @@ scrollbar_sql_resultat_y = Scrollbar(frame_sql_resultat)
 scrollbar_sql_resultat_y.pack(side=RIGHT, fill=Y)
 
 sql_resultat = Text(frame_sql_resultat, yscrollcommand= scrollbar_sql_resultat_y.set,
-xscrollcommand = scrollbar_sql_resultat_x.set, wrap='none') #, height=15) #, width=80)
+xscrollcommand = scrollbar_sql_resultat_x.set, wrap='none')
 sql_resultat.pack(expand=True, fill=BOTH)
 
 scrollbar_sql_resultat_x.config(command=sql_resultat.xview)
@@ -1334,8 +1300,8 @@ scrollbar_sql_resultat_y.config(command=sql_resultat.yview)
 
 # --- copyright label
 m_smati = (77, 111, 104, 97, 109, 101, 100, 32, 83, 77, 65, 84, 73)
-lbl_copyright = ttk.Label(root, text="By " + ''.join((chr(i) for i in m_smati)) + " , September 2023", anchor=CENTER) #, height=2)  #, fg="#808080"
-lbl_copyright.configure(foreground=fg_color_default_Label_Copyright) #, background=bg_color_default)
+lbl_copyright = ttk.Label(root, text="By " + ''.join((chr(i) for i in m_smati)) + " , September 2023", anchor=CENTER)
+lbl_copyright.configure(foreground=fg_color_default_Label_Copyright)
 lbl_copyright.grid(row=current_row, column=0, columnspan=5, ipady=10, sticky="WENS")
 current_row += 1
 
@@ -1348,11 +1314,13 @@ appIniFileName = "SelectFromDoc.ini"
 
 global _p_MainWindowMaximized, _p_GraphToolbarDisplayed
 readParam(join(getcwd(),appIniFileName))
+
 # Main window maximized
 if _p_MainWindowMaximized == 1:
     # root.attributes('-fullscreen',True)
     # root.geometry(f'{screen_width}x{screen_height}')
     root.state('zoomed')
+
 # Graph Toolbar displayed
 displayGraphToolbar.set(_p_GraphToolbarDisplayed)
 changerDisplayGraphToolbar()
