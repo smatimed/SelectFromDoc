@@ -651,7 +651,7 @@ def openDoc(docPath:str):
 
             boutonExecuter["state"] = "normal"
             boutonExporterResultat["state"] = "disabled"
-            option_displayGraphToolbar["state"] = "disabled"
+            # option_displayGraphToolbar["state"] = "disabled"
             boutonVisualisation["state"] = "disabled"
         except Exception as ErrRead:
             messagebox.showerror('Reading error', ErrRead)
@@ -707,7 +707,7 @@ def sourceFromClipboard():
 
         boutonExecuter["state"] = "normal"
         boutonExporterResultat["state"] = "disabled"
-        option_displayGraphToolbar["state"] = "disabled"
+        # option_displayGraphToolbar["state"] = "disabled"
         boutonVisualisation["state"] = "disabled"
 
     except pd.errors.EmptyDataError:
@@ -789,7 +789,7 @@ def Executer():
             vTempsExec.set(f"{len(df)} record{s}  (in {dureeExec:.2f} s)")
 
             boutonExporterResultat["state"] = "normal"
-            option_displayGraphToolbar["state"] = "normal"
+            # option_displayGraphToolbar["state"] = "normal"
 
             xAxis.set('')
             yAxis.set('')
@@ -1033,10 +1033,16 @@ def createSeparator_GraphToolbar():
 
 
 def closeEvent():
+    global _p_MainWindowMaximized, _p_GraphToolbarDisplayed
+
+    # Main window maximized
+    if (root.state() == 'normal' and _p_MainWindowMaximized == 1) or (root.state() == 'zoomed' and _p_MainWindowMaximized == 0):
+        updateOptionIniFile(appIniFileName, 'parameters', 'main window maximized', ('1' if root.state()=='zoomed' else '0'))
+
+    # Graph Toolbar displayed
     if _p_GraphToolbarDisplayed != displayGraphToolbar:
         updateOptionIniFile(appIniFileName, 'parameters', 'graph toolbar displayed', str(displayGraphToolbar.get()))
 
-    # updateOptionIniFile(appIniFileName, 'parameters', 'main window maximized', optionValue)
 
 
 # * ===========================================================================
@@ -1132,6 +1138,18 @@ scrollbar_requete_sql_y.config(command=requete_sql.yview)
 frame_2 = ttk.Frame(root)
 frame_2.grid(row=current_row, column=0, columnspan=5, sticky='WE')
 
+# --- bouton Open Sql
+imageOpen = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'open.png')))
+boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openRequest)
+Tooltip(boutonOpenSql, "Open a SQL request")
+boutonOpenSql.pack(side=LEFT, padx=10)
+
+# --- bouton Save Sql
+imageSave = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'save.png')))
+boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveRequest)
+Tooltip(boutonSaveSql, "Save the current SQL request")
+boutonSaveSql.pack(side=LEFT, padx=10)
+
 # --- bouton Executer
 ttk.Label(frame_2, text=" ").pack(side=LEFT)
 
@@ -1150,20 +1168,20 @@ lblTempsExec = ttk.Label(frame_2, textvariable=vTempsExec)
 # lblTempsExec.configure(foreground=fg_color_default_Label, background=bg_color_default)
 lblTempsExec.pack(side=LEFT, padx=10, pady=10)
 
-# --- bouton Open Sql
-# imageOpen = tk.PhotoImage(file="open.png")
-imageOpen = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'open.png')))
-boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openRequest)
-Tooltip(boutonOpenSql, "Open a SQL request")
-# boutonOpenSql.pack(side=LEFT, padx=10)
-boutonOpenSql.place(x=320,y=13)
+# # --- bouton Open Sql
+# # imageOpen = tk.PhotoImage(file="open.png")
+# imageOpen = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'open.png')))
+# boutonOpenSql = ttk.Button(frame_2, image=imageOpen, command=openRequest)
+# Tooltip(boutonOpenSql, "Open a SQL request")
+# # boutonOpenSql.pack(side=LEFT, padx=10)
+# boutonOpenSql.place(x=320,y=13)
 
-# --- bouton Save Sql
-imageSave = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'save.png')))
-boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveRequest)
-Tooltip(boutonSaveSql, "Save the current SQL request")
-# boutonSaveSql.pack(side=LEFT, padx=10)
-boutonSaveSql.place(x=360,y=13)
+# # --- bouton Save Sql
+# imageSave = tk.PhotoImage(file=path.abspath(path.join(path.dirname(__file__), 'save.png')))
+# boutonSaveSql = ttk.Button(frame_2, image=imageSave, command=saveRequest)
+# Tooltip(boutonSaveSql, "Save the current SQL request")
+# # boutonSaveSql.pack(side=LEFT, padx=10)
+# boutonSaveSql.place(x=360,y=13)
 
 # --- bouton Quit
 boutonFermer = ttk.Button(frame_2, text="Quit", width=6, command=root.quit)
@@ -1171,7 +1189,7 @@ boutonFermer.pack(side=RIGHT, padx=10)
 
 # --- option "Graph"
 displayGraphToolbar = IntVar()
-option_displayGraphToolbar = ttk.Checkbutton(frame_2, text="Chart toolbar", state="disabled", variable=displayGraphToolbar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphToolbar)
+option_displayGraphToolbar = ttk.Checkbutton(frame_2, text="Chart toolbar", variable=displayGraphToolbar, onvalue=1, offvalue=0, width=12, command=changerDisplayGraphToolbar)  #, state="disabled"
 ttk.Style().configure("Custom.TCheckbutton", foreground=fg_color_default_Label, background=bg_color_default)
 option_displayGraphToolbar.configure(style="Custom.TCheckbutton")
 Tooltip(option_displayGraphToolbar, "Display chart toolbar to visualize data")
@@ -1324,13 +1342,20 @@ current_row += 1
 # Bind the window resize event to the on_resize function
 root.bind('<Configure>', on_resize)
 
+# --- Parameters
 global appIniFileName
 appIniFileName = "SelectFromDoc.ini"
 
 global _p_MainWindowMaximized, _p_GraphToolbarDisplayed
 readParam(join(getcwd(),appIniFileName))
-print(_p_GraphToolbarDisplayed)
+# Main window maximized
+if _p_MainWindowMaximized == 1:
+    # root.attributes('-fullscreen',True)
+    # root.geometry(f'{screen_width}x{screen_height}')
+    root.state('zoomed')
+# Graph Toolbar displayed
 displayGraphToolbar.set(_p_GraphToolbarDisplayed)
+changerDisplayGraphToolbar()
 
 # Open a doc from the command line arguments
 if args.doc:
