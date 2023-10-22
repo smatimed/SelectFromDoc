@@ -21,9 +21,17 @@ import ntpath
 from time import time
 from datetime import datetime
 
-from os import path
+from os import path, getcwd
+from os.path import join, exists
 
 from pathlib import Path
+
+import atexit
+
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser  # ver. < 3.0
 
 import argparse
 
@@ -37,6 +45,77 @@ root.geometry(f'{root_width}x{root_height}+{(screen_width-root_width) // 2}+{(sc
 root.title('Select From Document (Excel, Csv, Json, Text, Xml) or Clipboard')
 root.iconbitmap(path.abspath(path.join(path.dirname(__file__), 'SelectFromDoc.ico')))
 
+
+# ================================================= Ini file (begin)
+def createIniFile(iniFileName: str = 'param.ini'):
+    """Create ini file ('iniFileName') of app options."""
+    if iniFileName.find('.') < 0:
+        iniFileName += '.ini'  # default extension
+
+    config = ConfigParser()
+    config.read(f'{iniFileName}')
+
+    if not config.has_section('parameters'):
+        config.add_section('parameters')
+
+    global _p_MainWindowMaximized, _p_GraphToolbarDisplayed
+    _p_MainWindowMaximized=0
+    _p_GraphToolbarDisplayed=0
+
+    config.set('parameters', 'main window maximized', str(_p_MainWindowMaximized))
+    config.set('parameters', 'graph toolbar displayed', str(_p_GraphToolbarDisplayed))
+
+    with open(f'{iniFileName}', 'w') as configfile:
+        config.write(configfile)
+
+
+def updateOptionIniFile(iniFileName: str = 'param.ini', section: str = 'parameters', option: str = 'option', value: str = ''):
+    """Update an 'option' (of a 'section') in the ini file 'iniFileName' by the 'value'."""
+
+    if iniFileName.find('.') < 0:
+        iniFileName += '.ini'  # default extension
+
+    config = ConfigParser()
+    config.read(f'{iniFileName}')
+
+    if not config.has_section(section):
+        config.add_section(section)
+
+    config.set(section, option, value)
+
+    with open(f'{iniFileName}', 'w') as configfile:
+        config.write(configfile)
+# ================================================= Ini file (end)
+
+def readParam(iniFileName: str = 'param.ini') -> bool:
+    """Read parameters (command line) and ini file ('iniFileName') of app options.
+    The priority is for the command line parameter, then for app option in ini file, then for the default value."""
+
+    global _p_MainWindowMaximized, _p_GraphToolbarDisplayed
+
+    # --- app options (ini file)
+    if iniFileName.find('.') < 0:
+        iniFileName += '.ini'  # default extension
+
+    lIniFileCreated = False
+    if not exists(f'{iniFileName}'):
+        createIniFile(f'{iniFileName}')
+        lIniFileCreated = True
+
+    config = ConfigParser()
+
+    try:
+        config.read(f'{iniFileName}')
+
+        if config.has_option('parameters', 'main window maximized'):
+            _p_MainWindowMaximized = config.getint('parameters', 'main window maximized')
+
+        if config.has_option('parameters', 'graph toolbar displayed'):
+            _p_GraphToolbarDisplayed = config.getint('parameters', 'graph toolbar displayed')
+    except Exception as err:
+        messagebox.showerror('Parameters',f"The file {iniFileName} doesn't exist or the values are incorrect.")
+
+    return lIniFileCreated
 
 class Tooltip:
     def __init__(self, widget, text):
@@ -953,11 +1032,19 @@ def createSeparator_GraphToolbar():
     seperator.pack(side=LEFT)
 
 
+def closeEvent():
+    if _p_GraphToolbarDisplayed != displayGraphToolbar:
+        updateOptionIniFile(appIniFileName, 'parameters', 'graph toolbar displayed', str(displayGraphToolbar.get()))
+
+    # updateOptionIniFile(appIniFileName, 'parameters', 'main window maximized', optionValue)
+
 
 # * ===========================================================================
 # * ===========================================================================
 # * ===========================================================================
 
+
+atexit.register(closeEvent)
 
 parser = argparse.ArgumentParser(
     description=__doc__,
@@ -1236,6 +1323,14 @@ current_row += 1
 
 # Bind the window resize event to the on_resize function
 root.bind('<Configure>', on_resize)
+
+global appIniFileName
+appIniFileName = "SelectFromDoc.ini"
+
+global _p_MainWindowMaximized, _p_GraphToolbarDisplayed
+readParam(join(getcwd(),appIniFileName))
+print(_p_GraphToolbarDisplayed)
+displayGraphToolbar.set(_p_GraphToolbarDisplayed)
 
 # Open a doc from the command line arguments
 if args.doc:
